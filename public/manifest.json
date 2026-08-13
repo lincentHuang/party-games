@@ -1,0 +1,16 @@
+{
+  "name": "誰是間諜 - 特務機密版",
+  "short_name": "誰是間諜",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#06090e",
+  "theme_color": "#06090e",
+  "description": "特務機密風格手機派對小遊戲，支援單機傳閱、指紋解密、分級題庫與快速自訂擴充",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='48' fill='%230b0f19' stroke='%2306b6d4' stroke-width='4'/><text x='50' y='60' font-size='50' text-anchor='middle' fill='%2306b6d4'>🕵️</text></svg>",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml"
+    }
+  ]
+}
