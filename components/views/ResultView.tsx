@@ -2,12 +2,13 @@
 
 import React, { useEffect } from 'react';
 import { soundManager } from '@/lib/soundManager';
-import { Player, Role, WordPair } from '@/types/game';
+import { Player, Role, WordPair, SpeechLogs } from '@/types/game';
 
 interface ResultViewProps {
   winner: Role | null;
   wordPair: WordPair;
   players: Player[];
+  speechLogs?: SpeechLogs;
   onReplaySame: () => void;
   onReSetup: () => void;
   onBackHome: () => void;
@@ -17,6 +18,7 @@ export const ResultView: React.FC<ResultViewProps> = ({
   winner,
   wordPair,
   players,
+  speechLogs = {},
   onReplaySame,
   onReSetup,
   onBackHome
@@ -71,36 +73,36 @@ export const ResultView: React.FC<ResultViewProps> = ({
   return (
     <div className="view-container view-enter">
       {/* 勝利橫幅 */}
-      <div className="text-center mb-md">
-        <div style={{ fontSize: '3.2rem', marginBottom: '2px' }}>{bannerIcon}</div>
-        <h1 style={{ fontSize: '2rem', fontWeight: 900, lineHeight: 1.1, marginBottom: '4px' }} className={bannerColor}>
+      <div className="text-center mb-sm shrink-0">
+        <div style={{ fontSize: '2.8rem', marginBottom: '2px' }}>{bannerIcon}</div>
+        <h1 style={{ fontSize: '1.8rem', fontWeight: 900, lineHeight: 1.1, marginBottom: '4px' }} className={bannerColor}>
           {bannerTitle}
         </h1>
-        <p className="text-code text-muted" style={{ fontSize: '0.8rem', letterSpacing: '1px' }}>
+        <p className="text-code text-muted" style={{ fontSize: '0.78rem', letterSpacing: '1px' }}>
           {bannerSub}
         </p>
       </div>
 
       {/* 機密情報詞彙大公開 */}
-      <div className="card mb-md" style={{ padding: '16px', borderColor: 'rgba(6, 182, 212, 0.4)' }}>
-        <div className="flex-between mb-sm">
+      <div className="card mb-sm shrink-0" style={{ padding: '12px 14px', borderColor: 'rgba(6, 182, 212, 0.4)' }}>
+        <div className="flex-between mb-xs">
           <span className="badge badge-classified">🔥 詞彙真相大公開</span>
-          <span className="badge badge-cyan">{wordPair.category} · 難度：{diffLabel}</span>
+          <span className="badge badge-cyan" style={{ fontSize: '0.75rem' }}>{wordPair.category} · 難度：{diffLabel}</span>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginTop: '10px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginTop: '6px' }}>
           {/* 平民詞 */}
-          <div style={{ background: 'rgba(16, 185, 129, 0.12)', border: '1.5px solid rgba(16, 185, 129, 0.4)', borderRadius: 'var(--radius-inner)', padding: '12px', textAlign: 'center' }}>
-            <div className="text-code text-emerald" style={{ fontSize: '0.72rem', fontWeight: 700 }}>平民特工詞彙</div>
-            <div style={{ fontFamily: 'var(--font-display)', fontSize: '1.35rem', fontWeight: 800, color: '#ffffff', marginTop: '4px' }}>
+          <div style={{ background: 'rgba(16, 185, 129, 0.12)', border: '1.5px solid rgba(16, 185, 129, 0.4)', borderRadius: 'var(--radius-inner)', padding: '10px 8px', textAlign: 'center' }}>
+            <div className="text-code text-emerald" style={{ fontSize: '0.7rem', fontWeight: 700 }}>平民特工詞彙</div>
+            <div style={{ fontFamily: 'var(--font-display)', fontSize: '1.2rem', fontWeight: 800, color: '#ffffff', marginTop: '2px' }}>
               {wordPair.civilian}
             </div>
           </div>
 
           {/* 間諜詞 */}
-          <div style={{ background: 'rgba(244, 63, 94, 0.12)', border: '1.5px solid rgba(244, 63, 94, 0.4)', borderRadius: 'var(--radius-inner)', padding: '12px', textAlign: 'center' }}>
-            <div className="text-code text-magenta" style={{ fontSize: '0.72rem', fontWeight: 700 }}>間諜臥底詞彙</div>
-            <div style={{ fontFamily: 'var(--font-display)', fontSize: '1.35rem', fontWeight: 800, color: '#ffffff', marginTop: '4px' }}>
+          <div style={{ background: 'rgba(244, 63, 94, 0.12)', border: '1.5px solid rgba(244, 63, 94, 0.4)', borderRadius: 'var(--radius-inner)', padding: '10px 8px', textAlign: 'center' }}>
+            <div className="text-code text-magenta" style={{ fontSize: '0.7rem', fontWeight: 700 }}>間諜臥底詞彙</div>
+            <div style={{ fontFamily: 'var(--font-display)', fontSize: '1.2rem', fontWeight: 800, color: '#ffffff', marginTop: '2px' }}>
               {wordPair.spy}
             </div>
           </div>
@@ -108,54 +110,82 @@ export const ResultView: React.FC<ResultViewProps> = ({
       </div>
 
       {/* 全體特工身分名冊復盤 */}
-      <div className="card mb-md" style={{ padding: '14px 16px', flex: 1 }}>
-        <div className="flex-between mb-sm">
-          <span style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '0.9rem', color: '#ffffff' }}>全體特工真實檔案</span>
-          <span className="text-code text-muted" style={{ fontSize: '0.75rem' }}>對局結束狀態</span>
+      <div className="card mb-sm" style={{ padding: '12px 14px', flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+        <div className="flex-between mb-xs">
+          <span style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '0.88rem', color: '#ffffff' }}>全體特工檔案與發言復盤</span>
+          <span className="text-code text-muted" style={{ fontSize: '0.72rem' }}>終局復盤</span>
         </div>
-        <div className="flex-col gap-sm overflow-y-auto flex-1 min-h-0" style={{ maxHeight: '220px' }}>
-          {players.map(p => (
-            <div
-              key={p.id}
-              className="flex-between shrink-0"
-              style={{ background: 'var(--bg-elevated)', padding: '8px 12px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-subtle)' }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ fontSize: '1.3rem' }}>{p.icon}</span>
-                <div>
-                  <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '0.95rem', color: '#ffffff' }}>{p.name}</div>
-                  <div className="text-code text-muted" style={{ fontSize: '0.7rem' }}>{p.code}</div>
+        <div className="flex-col gap-xs overflow-y-auto flex-1 min-h-0" style={{ maxHeight: '200px' }}>
+          {players.map(p => {
+            // 抓取該玩家在各輪的發言
+            const playerSpeeches = Object.keys(speechLogs)
+              .map(Number)
+              .map(r => ({ round: r, text: speechLogs[r]?.[p.id] }))
+              .filter(item => Boolean(item.text));
+
+            return (
+              <div
+                key={p.id}
+                className="shrink-0"
+                style={{ background: 'var(--bg-elevated)', padding: '8px 10px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-subtle)' }}
+              >
+                <div className="flex-between">
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ fontSize: '1.2rem' }}>{p.icon}</span>
+                    <div>
+                      <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '0.9rem', color: '#ffffff' }}>
+                        {p.name}
+                        {p.isAI && (
+                          <span className="badge badge-cyan" style={{ fontSize: '0.62rem', marginLeft: '6px', padding: '1px 5px' }}>
+                            AI
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-code text-muted" style={{ fontSize: '0.68rem' }}>{p.code}</div>
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    {p.role === 'SPY' ? (
+                      <span className="badge badge-role-spy" style={{ fontSize: '0.72rem' }}>間諜</span>
+                    ) : p.role === 'CIVILIAN' ? (
+                      <span className="badge badge-role-civ" style={{ fontSize: '0.72rem' }}>平民</span>
+                    ) : (
+                      <span className="badge badge-role-blank" style={{ fontSize: '0.72rem' }}>白板</span>
+                    )}
+                    {p.isAlive ? (
+                      <span className="badge badge-easy" style={{ fontSize: '0.68rem' }}>存活</span>
+                    ) : (
+                      <span className="text-muted" style={{ fontSize: '0.7rem' }}>第 {p.eliminatedRound} 輪出局</span>
+                    )}
+                  </div>
                 </div>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                {p.role === 'SPY' ? (
-                  <span className="badge badge-role-spy">間諜</span>
-                ) : p.role === 'CIVILIAN' ? (
-                  <span className="badge badge-role-civ">平民</span>
-                ) : (
-                  <span className="badge badge-role-blank">白板</span>
-                )}
-                {p.isAlive ? (
-                  <span className="badge badge-easy" style={{ fontSize: '0.72rem' }}>存活</span>
-                ) : (
-                  <span className="text-muted" style={{ fontSize: '0.75rem' }}>第 {p.eliminatedRound} 輪出局</span>
+
+                {/* 該玩家的發言速記展示 */}
+                {playerSpeeches.length > 0 && (
+                  <div style={{ marginTop: '6px', paddingTop: '4px', borderTop: '1px dashed rgba(255, 255, 255, 0.08)' }}>
+                    {playerSpeeches.map(s => (
+                      <div key={s.round} style={{ fontSize: '0.78rem', color: 'var(--fg-secondary)', lineHeight: 1.35, marginTop: '2px' }}>
+                        <span className="text-cyan" style={{ fontWeight: 600 }}>[R{s.round}]</span> 「{s.text}」
+                      </div>
+                    ))}
+                  </div>
                 )}
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 
       {/* 底部操作按鈕組 */}
-      <div className="flex-col gap-sm" style={{ paddingBottom: '8px' }}>
-        <button onClick={handleReplay} className="btn btn-primary btn-large btn-full">
+      <div className="flex-col gap-sm shrink-0" style={{ paddingBottom: '8px' }}>
+        <button onClick={handleReplay} className="btn btn-primary btn-large btn-full shrink-0">
           🔄 再來一局 (保留特工名單)
         </button>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-          <button onClick={handleSetup} className="btn btn-secondary">
+          <button onClick={handleSetup} className="btn btn-secondary shrink-0">
             ⚙️ 重新設定
           </button>
-          <button onClick={handleHome} className="btn btn-ghost">
+          <button onClick={handleHome} className="btn btn-ghost shrink-0">
             🏠 回首頁
           </button>
         </div>

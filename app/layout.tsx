@@ -2,13 +2,13 @@ import type { Metadata, Viewport } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: '誰是間諜 - 手機派對小遊戲',
-  description: '專為手機網頁優化的誰是間諜派對小遊戲，支援單機傳閱、生物指紋防偷窺解密、分級題庫與快速自訂擴充。',
+  title: '聚會桌遊大廳 - 手機派對小遊戲',
+  description: '專為手機網頁優化的聚會桌遊派對大廳，包含《誰是間諜》、《阿瓦隆》、《魚雷遊戲》、《7大奇蹟》，支援 QR Code 掃碼多人連線對戰與單機傳閱。',
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
-    title: '誰是間諜'
+    title: '聚會桌遊大廳'
   }
 };
 

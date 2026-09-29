@@ -27,6 +27,8 @@ export interface Player {
   word: string;
   isAlive: boolean;
   eliminatedRound: number | null;
+  isAI?: boolean;
+  aiPersonality?: string;
 }
 
 export interface GameConfig {
@@ -38,7 +40,22 @@ export interface GameConfig {
   difficulties: Difficulty[];
   categories: string[];
   playerNames: string[];
+  aiCount: number; // 電腦 AI 人數
+  enableTTS: boolean; // 是否開啟語音朗讀
 }
+
+export interface SpeechRecord {
+  playerId: number;
+  playerName: string;
+  playerCode: string;
+  playerIcon: string;
+  isAI?: boolean;
+  round: number;
+  text: string;
+  timestamp: number;
+}
+
+export type SpeechLogs = Record<number, Record<number, string>>; // round -> playerId -> text
 
 export interface EliminationRecord {
   player: Player;
@@ -60,3 +77,4 @@ export interface VoteTallyResult {
   tally: Record<number, number>;
   victoryStatus?: VictoryStatus;
 }
+

@@ -239,6 +239,23 @@ export class SoundManager {
       osc.stop(ctx.currentTime + i * 0.12 + 0.35);
     });
   }
+
+  // 快捷別名
+  public playFingerprintPress(): void {
+    this.playFingerprintScan();
+  }
+
+  public playWin(): void {
+    this.playVictoryCivilian();
+  }
+
+  public playSpyWin(): void {
+    this.playVictorySpy();
+  }
+
+  public playVoteSuccess(): void {
+    this.playRevealSecret();
+  }
 }
 
 export const soundManager = new SoundManager();

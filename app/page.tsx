@@ -1,151 +1,127 @@
+// app/page.tsx
 'use client';
 
-import React, { useState } from 'react';
-import { useGameState } from '@/hooks/useGameState';
-import { Header } from '@/components/Header';
-import { HomeView } from '@/components/views/HomeView';
-import { SetupView } from '@/components/views/SetupView';
-import { RevealView } from '@/components/views/RevealView';
-import { PlayView } from '@/components/views/PlayView';
-import { VoteView } from '@/components/views/VoteView';
-import { ResultView } from '@/components/views/ResultView';
-import { WordsView } from '@/components/views/WordsView';
-import { RulesModal } from '@/components/modals/RulesModal';
-import { MultiplayerModal } from '@/components/modals/MultiplayerModal';
+import React, { useState, useEffect } from 'react';
+import { LobbyHeader } from '@/components/lobby/LobbyHeader';
+import { GameLobbyView } from '@/components/lobby/GameLobbyView';
+import { SpyGame } from '@/components/spy/SpyGame';
+import { AvalonGame } from '@/components/avalon/AvalonGame';
+import { SonarGame } from '@/components/sonar/SonarGame';
+import { WondersGame } from '@/components/wonders/WondersGame';
+import { JoinRoomModal } from '@/components/multiplayer/JoinRoomModal';
+import { useMultiplayerRoom } from '@/hooks/useMultiplayerRoom';
 
-export default function GamePage() {
-  const {
-    phase,
-    setPhase,
-    config,
-    updateConfig,
-    players,
-    alivePlayers,
-    currentWordPair,
-    currentRevealIndex,
-    round,
-    startingSpeakerIndex,
-    currentSpeakerIndex,
-    winner,
-    startNewGame,
-    nextReveal,
-    getCurrentRevealPlayer,
-    nextSpeaker,
-    getCurrentSpeaker,
-    eliminatePlayerDirectly,
-    advanceToNextRound
-  } = useGameState();
+type ActiveGame = 'LOBBY' | 'SPY' | 'AVALON' | 'SONAR' | 'WONDERS';
 
-  const [isRulesOpen, setIsRulesOpen] = useState(false);
-  const [isMultiplayerOpen, setIsMultiplayerOpen] = useState(false);
+export default function PartyGamesPage() {
+  const [activeGame, setActiveGame] = useState<ActiveGame>('LOBBY');
+  const [initialRoomId, setInitialRoomId] = useState<string | null>(null);
+  const [isJoinModalOpen, setIsJoinModalOpen] = useState(false);
 
-  const handleStartGame = () => {
-    startNewGame();
-    setPhase('REVEAL');
+  const { currentUser, joinRoom } = useMultiplayerRoom();
+
+  // 監聽網址參數，支援手機掃碼 QR Code 直接進房 (例如 ?game=sonar&room=SONAR-1234)
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const gameParam = params.get('game')?.toUpperCase();
+      const roomParam = params.get('room');
+
+      if (roomParam) {
+        setInitialRoomId(roomParam);
+      }
+
+      if (gameParam === 'SPY') setActiveGame('SPY');
+      else if (gameParam === 'AVALON') setActiveGame('AVALON');
+      else if (gameParam === 'SONAR') setActiveGame('SONAR');
+      else if (gameParam === 'WONDERS') setActiveGame('WONDERS');
+    }
+  }, []);
+
+  // 處理手動輸入房間代碼加入
+  const handleJoinByCode = async (code: string, playerName?: string): Promise<boolean> => {
+    try {
+      const cleanCode = code.trim().toUpperCase();
+      const res = await fetch(`/api/rooms/${cleanCode}`);
+      const data = await res.json();
+
+      if (data.success && data.room) {
+        setInitialRoomId(cleanCode);
+        const gameType = data.room.gameType;
+
+        if (gameType === 'SPY') setActiveGame('SPY');
+        else if (gameType === 'AVALON') setActiveGame('AVALON');
+        else if (gameType === 'SONAR') setActiveGame('SONAR');
+        else if (gameType === 'WONDERS') setActiveGame('WONDERS');
+
+        return true;
+      }
+      return false;
+    } catch (e) {
+      return false;
+    }
   };
-
-  const handleCompleteReveal = () => {
-    setPhase('PLAY');
-  };
-
-  const handleStartVote = () => {
-    setPhase('VOTE');
-  };
-
-  const handleVoteNextRound = () => {
-    advanceToNextRound();
-    setPhase('PLAY');
-  };
-
-  const handleGameOver = () => {
-    setPhase('RESULT');
-  };
-
-  const handleReplaySame = () => {
-    startNewGame();
-    setPhase('REVEAL');
-  };
-
-  const currentRevealPlayer = getCurrentRevealPlayer();
-  const currentSpeaker = getCurrentSpeaker();
-  const startingSpeaker = players[startingSpeakerIndex];
 
   return (
     <>
-      <Header phase={phase} onGoHome={() => setPhase('HOME')} />
+      {/* 頂部全域導航列 */}
+      <LobbyHeader
+        currentGame={activeGame}
+        onGoLobby={() => {
+          setActiveGame('LOBBY');
+          setInitialRoomId(null);
+          // 清除 URL 參數
+          if (typeof window !== 'undefined' && window.history.replaceState) {
+            window.history.replaceState({}, '', window.location.pathname);
+          }
+        }}
+      />
 
-      <main id="view-root" style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-        {phase === 'HOME' && (
-          <HomeView
-            onSelectPhase={setPhase}
-            onOpenRules={() => setIsRulesOpen(true)}
-            onOpenMultiplayer={() => setIsMultiplayerOpen(true)}
+      {/* 主畫面視圖 */}
+      <main id="view-root" style={{ flex: 1, display: 'flex', flexDirection: 'column', overflowY: 'auto', minHeight: 0 }}>
+        {activeGame === 'LOBBY' && (
+          <GameLobbyView
+            onSelectGame={game => {
+              setActiveGame(game);
+              setInitialRoomId(null);
+            }}
+            onOpenJoinModal={() => setIsJoinModalOpen(true)}
           />
         )}
 
-        {phase === 'SETUP' && (
-          <SetupView
-            config={config}
-            onUpdateConfig={updateConfig}
-            onBack={() => setPhase('HOME')}
-            onStartGame={handleStartGame}
+        {activeGame === 'SPY' && (
+          <SpyGame onBackToLobby={() => setActiveGame('LOBBY')} />
+        )}
+
+        {activeGame === 'AVALON' && (
+          <AvalonGame
+            onBackToLobby={() => setActiveGame('LOBBY')}
+            initialRoomId={initialRoomId}
           />
         )}
 
-        {phase === 'REVEAL' && (
-          <RevealView
-            player={currentRevealPlayer}
-            totalPlayers={players.length}
-            currentIndex={currentRevealIndex}
-            wordPair={currentWordPair}
-            onNextReveal={nextReveal}
-            onCompleteReveal={handleCompleteReveal}
+        {activeGame === 'SONAR' && (
+          <SonarGame
+            onBackToLobby={() => setActiveGame('LOBBY')}
+            initialRoomId={initialRoomId}
           />
         )}
 
-        {phase === 'PLAY' && (
-          <PlayView
-            round={round}
-            totalPlayers={players.length}
-            speechTime={config.speechTime}
-            currentSpeaker={currentSpeaker}
-            startingSpeaker={startingSpeaker}
-            players={players}
-            alivePlayers={alivePlayers}
-            onNextSpeaker={nextSpeaker}
-            onStartVote={handleStartVote}
+        {activeGame === 'WONDERS' && (
+          <WondersGame
+            onBackToLobby={() => setActiveGame('LOBBY')}
+            initialRoomId={initialRoomId}
           />
-        )}
-
-        {phase === 'VOTE' && (
-          <VoteView
-            round={round}
-            alivePlayers={alivePlayers}
-            showRoleOnEliminated={config.showRoleOnEliminated}
-            onEliminate={eliminatePlayerDirectly}
-            onNextRound={handleVoteNextRound}
-            onGameOver={handleGameOver}
-          />
-        )}
-
-        {phase === 'RESULT' && (
-          <ResultView
-            winner={winner}
-            wordPair={currentWordPair}
-            players={players}
-            onReplaySame={handleReplaySame}
-            onReSetup={() => setPhase('SETUP')}
-            onBackHome={() => setPhase('HOME')}
-          />
-        )}
-
-        {phase === 'WORDS' && (
-          <WordsView onBack={() => setPhase('HOME')} />
         )}
       </main>
 
-      <RulesModal isOpen={isRulesOpen} onClose={() => setIsRulesOpen(false)} />
-      <MultiplayerModal isOpen={isMultiplayerOpen} onClose={() => setIsMultiplayerOpen(false)} />
+      {/* 輸入房間代碼加入彈窗 */}
+      <JoinRoomModal
+        isOpen={isJoinModalOpen}
+        onClose={() => setIsJoinModalOpen(false)}
+        onJoin={handleJoinByCode}
+        initialPlayerName={currentUser.name}
+      />
     </>
   );
 }

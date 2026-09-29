@@ -11,6 +11,7 @@ interface VoteViewProps {
   onEliminate: (playerId: number) => VictoryStatus;
   onNextRound: () => void;
   onGameOver: () => void;
+  onOpenSpeechLog?: () => void;
 }
 
 export const VoteView: React.FC<VoteViewProps> = ({
@@ -19,7 +20,8 @@ export const VoteView: React.FC<VoteViewProps> = ({
   showRoleOnEliminated,
   onEliminate,
   onNextRound,
-  onGameOver
+  onGameOver,
+  onOpenSpeechLog
 }) => {
   const [selectedPlayerId, setSelectedPlayerId] = useState<number | null>(null);
   const [eliminatedModalData, setEliminatedModalData] = useState<{
@@ -63,45 +65,60 @@ export const VoteView: React.FC<VoteViewProps> = ({
   };
 
   const selectedPlayer = alivePlayers.find(p => p.id === selectedPlayerId);
+  const aliveAICount = alivePlayers.filter(p => p.isAI).length;
 
   return (
     <div className="view-container view-enter">
-      {/* 頂部標題 */}
-      <div className="flex-between mb-md">
+      {/* 頂部標題與速記冊捷徑 */}
+      <div className="flex-between mb-sm shrink-0">
         <span className="badge badge-classified">第 {round} 輪投票放逐</span>
-        <span className="badge badge-cyan" style={{ fontSize: '0.82rem' }}>
-          存活特工: {alivePlayers.length} 位
-        </span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+          {onOpenSpeechLog && (
+            <button
+              onClick={onOpenSpeechLog}
+              className="btn btn-ghost"
+              style={{ padding: '3px 8px', fontSize: '0.78rem', color: 'var(--accent-cyan-light)', border: '1px solid rgba(6, 182, 212, 0.3)' }}
+            >
+              📜 查看發言速記
+            </button>
+          )}
+          <span className="badge badge-cyan" style={{ fontSize: '0.82rem' }}>
+            存活: {alivePlayers.length} 位
+          </span>
+        </div>
       </div>
 
-      <div className="card card-glass mb-md text-center" style={{ padding: '16px' }}>
-        <h2 style={{ fontSize: '1.25rem', color: '#ffffff', marginBottom: '4px' }}>
+      <div className="card card-glass mb-sm text-center shrink-0" style={{ padding: '12px 14px' }}>
+        <h2 style={{ fontSize: '1.2rem', color: '#ffffff', marginBottom: '4px' }}>
           請全體特工指認間諜
         </h2>
-        <p style={{ color: 'var(--fg-secondary)', fontSize: '0.85rem' }}>
-          請點選下方得票最多的嫌疑特工進行放逐審判：
+        <p style={{ color: 'var(--fg-secondary)', fontSize: '0.82rem', margin: 0 }}>
+          {aliveAICount > 0
+            ? `包含 ${aliveAICount} 位電腦特工在內，請點選得票最多之嫌疑人：`
+            : '請點選下方得票最多的嫌疑特工進行放逐審判：'}
         </p>
       </div>
 
       {/* 候選特工名冊 */}
-      <div className="agents-grid mb-md" style={{ flex: 1, alignContent: 'start' }}>
+      <div className="agents-grid mb-md shrink-0" style={{ alignContent: 'start', gap: '8px' }}>
         {alivePlayers.map(p => (
           <div
             key={p.id}
             onClick={() => handleSelectCandidate(p.id)}
-            className={`agent-card ${selectedPlayerId === p.id ? 'selected-vote' : ''}`}
+            className={`agent-card shrink-0 ${selectedPlayerId === p.id ? 'selected-vote' : ''}`}
+            style={{ minHeight: '48px' }}
           >
-            <div className="agent-avatar">{p.icon}</div>
+            <div className="agent-avatar" style={{ width: '32px', height: '32px', fontSize: '1.2rem' }}>{p.icon}</div>
             <div className="agent-info">
-              <div className="agent-code">{p.code}</div>
-              <div className="agent-name">{p.name}</div>
+              <div className="agent-code" style={{ fontSize: '0.68rem' }}>{p.code}</div>
+              <div className="agent-name" style={{ fontSize: '0.82rem' }}>{p.name}</div>
             </div>
           </div>
         ))}
       </div>
 
       {/* 底部操作區 */}
-      <div className="flex-col gap-sm" style={{ paddingBottom: '8px' }}>
+      <div className="flex-col gap-sm shrink-0" style={{ paddingBottom: '24px' }}>
         <button
           onClick={handleConfirmEliminate}
           className="btn btn-danger btn-large btn-full"
@@ -114,6 +131,7 @@ export const VoteView: React.FC<VoteViewProps> = ({
           🔄 出現平票，重新發言 / 重新投票
         </button>
       </div>
+
 
       {/* 淘汰公布彈窗 */}
       {eliminatedModalData && (

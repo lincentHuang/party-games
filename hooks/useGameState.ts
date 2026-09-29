@@ -9,6 +9,8 @@ const AGENT_ICONS = [
   '🦁', '🐯', '🦉', '🐲', '⚡', '🔥', '🔮', '🚀'
 ];
 
+const AI_ICONS = ['🤖', '🦾', '👾', '🧠', '🦿', '🛰️', '🛸', '⚡'];
+
 export function useGameState() {
   const [phase, setPhase] = useState<Phase>('HOME');
 
@@ -20,7 +22,9 @@ export function useGameState() {
     showRoleOnEliminated: true,
     difficulties: ['easy', 'medium', 'hard'],
     categories: ['all'],
-    playerNames: []
+    playerNames: [],
+    aiCount: 0,
+    enableTTS: true
   });
 
   const [players, setPlayers] = useState<Player[]>([]);
@@ -31,6 +35,7 @@ export function useGameState() {
     category: '美食飲品'
   });
 
+  const [speechLogs, setSpeechLogs] = useState<Record<number, Record<number, string>>>({});
   const [currentRevealIndex, setCurrentRevealIndex] = useState<number>(0);
   const [round, setRound] = useState<number>(1);
   const [startingSpeakerIndex, setStartingSpeakerIndex] = useState<number>(0);
@@ -40,6 +45,17 @@ export function useGameState() {
   // 更新遊戲配置
   const updateConfig = useCallback((newConfig: Partial<GameConfig>) => {
     setConfig(prev => ({ ...prev, ...newConfig }));
+  }, []);
+
+  // 記錄玩家發言
+  const recordSpeech = useCallback((r: number, playerId: number, text: string) => {
+    setSpeechLogs(prev => ({
+      ...prev,
+      [r]: {
+        ...(prev[r] || {}),
+        [playerId]: text
+      }
+    }));
   }, []);
 
   // 取得存活特工
@@ -88,6 +104,7 @@ export function useGameState() {
     const total = config.playerCount;
     const spyCount = config.spyCount;
     const hasBlank = config.hasBlank;
+    const aiCount = Math.min(config.aiCount || 0, total - 1);
 
     // 分配身分
     const roles: Role[] = [];
@@ -101,6 +118,9 @@ export function useGameState() {
       [roles[i], roles[j]] = [roles[j], roles[i]];
     }
 
+    // 決定哪些席位是 AI（真人優先在前面，AI 安排在後面的席位）
+    const humanCount = total - aiCount;
+
     // 建立特工陣列
     const newPlayers: Player[] = [];
     for (let i = 0; i < total; i++) {
@@ -110,22 +130,29 @@ export function useGameState() {
       else if (role === 'SPY') word = wordPair.spy;
       else if (role === 'BLANK') word = '無（你是白板特工，請靠推理偽裝）';
 
+      const isAI = i >= humanCount;
       const customName = config.playerNames[i]?.trim();
       const code = `AGENT ${String(i + 1).padStart(2, '0')}`;
+      const defaultName = isAI ? `🤖 AI 特工 ${i - humanCount + 1}` : code;
+      const icon = isAI
+        ? AI_ICONS[(i - humanCount) % AI_ICONS.length]
+        : AGENT_ICONS[i % AGENT_ICONS.length];
 
       newPlayers.push({
         id: i,
         code,
-        name: customName || code,
-        icon: AGENT_ICONS[i % AGENT_ICONS.length],
+        name: customName || defaultName,
+        icon,
         role,
         word,
         isAlive: true,
-        eliminatedRound: null
+        eliminatedRound: null,
+        isAI
       });
     }
 
     setPlayers(newPlayers);
+    setSpeechLogs({});
     setCurrentRevealIndex(0);
     setRound(1);
     setWinner(null);
@@ -205,6 +232,8 @@ export function useGameState() {
     players,
     alivePlayers,
     currentWordPair,
+    speechLogs,
+    recordSpeech,
     currentRevealIndex,
     round,
     startingSpeakerIndex,
@@ -219,3 +248,4 @@ export function useGameState() {
     advanceToNextRound
   };
 }
+

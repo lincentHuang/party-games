@@ -28,11 +28,28 @@ export const SetupView: React.FC<SetupViewProps> = ({
     if (next >= 3 && next <= 16) {
       soundManager.playClick();
       const newMaxSpy = calcMaxSpy(next, config.hasBlank);
+      const newMaxAI = next - 1;
       onUpdateConfig({
         playerCount: next,
-        spyCount: Math.min(config.spyCount, newMaxSpy)
+        spyCount: Math.min(config.spyCount, newMaxSpy),
+        aiCount: Math.min(config.aiCount || 0, newMaxAI)
       });
     }
+  };
+
+  const handleAICountChange = (delta: number) => {
+    const current = config.aiCount || 0;
+    const next = current + delta;
+    const maxAI = config.playerCount - 1;
+    if (next >= 0 && next <= maxAI) {
+      soundManager.playClick();
+      onUpdateConfig({ aiCount: next });
+    }
+  };
+
+  const handleToggleTTS = (checked: boolean) => {
+    soundManager.playClick();
+    onUpdateConfig({ enableTTS: checked });
   };
 
   const handleSpyCountChange = (delta: number) => {
@@ -91,7 +108,7 @@ export const SetupView: React.FC<SetupViewProps> = ({
   return (
     <div className="view-container view-enter">
       {/* 頂部標題列 */}
-      <div className="flex-between mb-md">
+      <div className="flex-between mb-md shrink-0">
         <button onClick={onBack} className="btn btn-ghost" style={{ padding: '6px 12px', fontSize: '0.85rem' }}>
           ← 返回首頁
         </button>
@@ -100,10 +117,10 @@ export const SetupView: React.FC<SetupViewProps> = ({
 
       <div className="flex-col gap-md">
         {/* 1. 特工總人數 */}
-        <div className="stepper-container">
+        <div className="stepper-container shrink-0">
           <div>
             <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1rem', color: '#ffffff' }}>特工總人數 (Players)</div>
-            <div style={{ fontSize: '0.8rem', color: 'var(--fg-secondary)' }}>支援 3 ~ 16 位玩家</div>
+            <div style={{ fontSize: '0.8rem', color: 'var(--fg-secondary)' }}>支援 3 ~ 16 位特工（真人 + AI）</div>
           </div>
           <div className="stepper-controls">
             <button
@@ -124,8 +141,37 @@ export const SetupView: React.FC<SetupViewProps> = ({
           </div>
         </div>
 
+        {/* 1.5 電腦 AI 特工人數 */}
+        <div className="stepper-container shrink-0" style={{ borderColor: (config.aiCount || 0) > 0 ? 'rgba(6, 182, 212, 0.4)' : undefined }}>
+          <div>
+            <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1rem', color: '#ffffff' }}>
+              🤖 電腦 AI 特工 (AI Bots)
+            </div>
+            <div style={{ fontSize: '0.8rem', color: 'var(--accent-cyan-light)', fontWeight: 600 }}>
+              {(config.aiCount || 0) === 0 ? '全真人遊玩' : `加入 ${config.aiCount} 位電腦特工陪玩`}
+            </div>
+          </div>
+          <div className="stepper-controls">
+            <button
+              onClick={() => handleAICountChange(-1)}
+              className="stepper-btn"
+              disabled={(config.aiCount || 0) <= 0}
+            >
+              -
+            </button>
+            <span className="stepper-val text-cyan">{config.aiCount || 0}</span>
+            <button
+              onClick={() => handleAICountChange(1)}
+              className="stepper-btn"
+              disabled={(config.aiCount || 0) >= config.playerCount - 1}
+            >
+              +
+            </button>
+          </div>
+        </div>
+
         {/* 2. 間諜數量 */}
-        <div className="stepper-container">
+        <div className="stepper-container shrink-0">
           <div>
             <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1rem', color: '#ffffff' }}>間諜人數 (Spies)</div>
             <div style={{ fontSize: '0.8rem', color: 'var(--accent-magenta)', fontWeight: 600 }}>潛伏在玩家中的臥底</div>
@@ -150,7 +196,7 @@ export const SetupView: React.FC<SetupViewProps> = ({
         </div>
 
         {/* 3. 白板角色開關 */}
-        <div className="toggle-row">
+        <div className="toggle-row shrink-0">
           <div>
             <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1rem', color: '#ffffff' }}>加入白板特工 (Blank Role)</div>
             <div style={{ fontSize: '0.8rem', color: 'var(--accent-yellow)', fontWeight: 600 }}>1 位玩家完全沒有詞彙，全靠推理偽裝</div>
@@ -165,8 +211,28 @@ export const SetupView: React.FC<SetupViewProps> = ({
           </label>
         </div>
 
+        {/* 3.5 AI 語音朗讀開關 */}
+        {(config.aiCount || 0) > 0 && (
+          <div className="toggle-row shrink-0">
+            <div>
+              <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1rem', color: '#ffffff' }}>
+                🔊 AI 特言語音朗讀 (Speech TTS)
+              </div>
+              <div style={{ fontSize: '0.8rem', color: 'var(--fg-secondary)' }}>輪到電腦特工發言時，以語音念出描述</div>
+            </div>
+            <label className="toggle-switch">
+              <input
+                type="checkbox"
+                checked={config.enableTTS !== false}
+                onChange={(e) => handleToggleTTS(e.target.checked)}
+              />
+              <span className="toggle-slider" />
+            </label>
+          </div>
+        )}
+
         {/* 4. 難度等級篩選 */}
-        <div className="card" style={{ padding: '14px 16px' }}>
+        <div className="card shrink-0" style={{ padding: '14px 16px' }}>
           <div className="flex-between mb-sm">
             <span style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '0.95rem', color: '#ffffff' }}>題目難度 (可複選)</span>
             <span style={{ fontSize: '0.78rem', color: 'var(--fg-muted)' }}>依聚會實力篩課題庫</span>
@@ -194,7 +260,7 @@ export const SetupView: React.FC<SetupViewProps> = ({
         </div>
 
         {/* 5. 發言限時 */}
-        <div className="card" style={{ padding: '14px 16px' }}>
+        <div className="card shrink-0" style={{ padding: '14px 16px' }}>
           <div className="flex-between mb-sm">
             <span style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '0.95rem', color: '#ffffff' }}>每位特工發言限時</span>
             <span className="text-code text-cyan" style={{ fontSize: '0.9rem', fontWeight: 700 }}>
@@ -215,7 +281,7 @@ export const SetupView: React.FC<SetupViewProps> = ({
         </div>
 
         {/* 6. 淘汰揭曉規則 */}
-        <div className="toggle-row">
+        <div className="toggle-row shrink-0">
           <div>
             <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1rem', color: '#ffffff' }}>淘汰直接公布身分 (明牌模式)</div>
             <div style={{ fontSize: '0.8rem', color: 'var(--fg-secondary)' }}>關閉則為「暗牌」，直到遊戲結束才揭曉身分</div>
@@ -231,38 +297,42 @@ export const SetupView: React.FC<SetupViewProps> = ({
         </div>
 
         {/* 自訂玩家暱稱摺疊區 */}
-        <div className="card" style={{ padding: '12px 16px' }}>
+        <div className="card shrink-0" style={{ padding: '12px 16px' }}>
           <details>
             <summary style={{ cursor: 'pointer', fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '0.9rem', color: 'var(--accent-cyan-light)', outline: 'none' }}>
-              ✏️ 自訂玩家名稱 (可選，點擊展開)
+              ✏️ 自訂特工名稱 (可選，點擊展開)
             </summary>
             <div className="flex-col gap-sm" style={{ marginTop: '12px' }}>
-              {Array.from({ length: config.playerCount }).map((_, i) => (
-                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <span className="text-code" style={{ fontSize: '0.8rem', color: 'var(--fg-muted)', width: '68px', fontWeight: 700 }}>
-                    P{i + 1}:
-                  </span>
-                  <input
-                    type="text"
-                    className="input-text"
-                    placeholder={`AGENT ${String(i + 1).padStart(2, '0')}`}
-                    value={config.playerNames[i] || ''}
-                    onChange={(e) => handlePlayerNameChange(i, e.target.value)}
-                    style={{ padding: '8px 12px', fontSize: '0.88rem' }}
-                  />
-                </div>
-              ))}
+              {Array.from({ length: config.playerCount }).map((_, i) => {
+                const isAI = i >= config.playerCount - (config.aiCount || 0);
+                return (
+                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span className="text-code" style={{ fontSize: '0.8rem', color: isAI ? 'var(--accent-cyan-light)' : 'var(--fg-muted)', width: '76px', fontWeight: 700 }}>
+                      {isAI ? `🤖 P${i + 1}(AI):` : `P${i + 1}:`}
+                    </span>
+                    <input
+                      type="text"
+                      className="input-text"
+                      placeholder={isAI ? `🤖 AI 特工 ${i - (config.playerCount - (config.aiCount || 0)) + 1}` : `AGENT ${String(i + 1).padStart(2, '0')}`}
+                      value={config.playerNames[i] || ''}
+                      onChange={(e) => handlePlayerNameChange(i, e.target.value)}
+                      style={{ padding: '8px 12px', fontSize: '0.88rem' }}
+                    />
+                  </div>
+                );
+              })}
             </div>
           </details>
         </div>
       </div>
 
       {/* 底部啟動按鈕 */}
-      <div style={{ marginTop: '24px', paddingBottom: '12px' }}>
+      <div className="shrink-0" style={{ marginTop: '24px', paddingBottom: '24px' }}>
         <button onClick={handleStart} className="btn btn-primary btn-large btn-full">
           🚀 啟動任務 (發牌看詞)
         </button>
       </div>
     </div>
+
   );
 };

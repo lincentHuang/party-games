@@ -38,7 +38,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
   return (
     <div className="view-container view-enter" style={{ justifyContent: 'center' }}>
       {/* Hero 主標題區 */}
-      <div className="text-center mb-lg">
+      <div className="text-center mb-lg shrink-0">
         <span className="badge badge-classified mb-sm">
           PARTY BOARD GAME
         </span>
@@ -51,9 +51,9 @@ export const HomeView: React.FC<HomeViewProps> = ({
       </div>
 
       {/* 模式選單卡片 */}
-      <div className="flex-col gap-md mb-lg">
+      <div className="flex-col gap-md mb-lg shrink-0">
         {/* 1. 核心首選：單機傳閱派對模式 */}
-        <button onClick={handleSingleMode} className="card card-hero-highlight" style={{ textAlign: 'left', cursor: 'pointer' }}>
+        <button onClick={handleSingleMode} className="card card-hero-highlight shrink-0" style={{ textAlign: 'left', cursor: 'pointer' }}>
           <div className="flex-between mb-sm">
             <span className="badge badge-cyan">🔥 推薦首選模式</span>
             <span style={{ fontSize: '1.6rem' }}>📱</span>
@@ -67,7 +67,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
         </button>
 
         {/* 2. 次要功能：題庫庫房與自訂擴充 */}
-        <button onClick={handleWordsManage} className="card" style={{ textAlign: 'left', cursor: 'pointer' }}>
+        <button onClick={handleWordsManage} className="card shrink-0" style={{ textAlign: 'left', cursor: 'pointer' }}>
           <div className="flex-between mb-sm">
             <span className="badge badge-easy">🗃️ 題庫管理</span>
             <span style={{ fontSize: '1.4rem' }}>📚</span>
@@ -81,7 +81,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
         </button>
 
         {/* 3. 預留功能：多人房間連線 */}
-        <button onClick={handleMultiMode} className="card" style={{ textAlign: 'left', cursor: 'pointer', opacity: 0.85 }}>
+        <button onClick={handleMultiMode} className="card shrink-0" style={{ textAlign: 'left', cursor: 'pointer', opacity: 0.85 }}>
           <div className="flex-between mb-sm">
             <span className="badge" style={{ background: 'rgba(255, 255, 255, 0.08)', color: 'var(--fg-muted)' }}>📡 模組預覽</span>
             <span style={{ fontSize: '1.4rem' }}>👥</span>
@@ -96,8 +96,8 @@ export const HomeView: React.FC<HomeViewProps> = ({
       </div>
 
       {/* 底部規則指南按鈕 */}
-      <div className="flex-center gap-md mt-auto">
-        <button onClick={handleRules} className="btn btn-secondary" style={{ fontSize: '0.9rem', padding: '10px 20px' }}>
+      <div className="flex-center gap-md mt-auto shrink-0">
+        <button onClick={handleRules} className="btn btn-secondary shrink-0" style={{ fontSize: '0.9rem', padding: '10px 20px' }}>
           📖 特工行動守則指南
         </button>
       </div>
