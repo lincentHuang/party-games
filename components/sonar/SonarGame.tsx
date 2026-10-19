@@ -1,7 +1,7 @@
 // components/sonar/SonarGame.tsx
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { OceanGrid } from './OceanGrid';
 import { SystemControls } from './SystemControls';
 import { SonarLog } from './SonarLog';
@@ -24,6 +24,14 @@ export const SonarGame: React.FC<SonarGameProps> = ({ onBackToLobby, initialRoom
 
   // 房間連線
   const roomEngine = useMultiplayerRoom(initialRoomId);
+
+  // 以房號／QR Code 加入成功後，切到房間模式並顯示房間名單
+  useEffect(() => {
+    if (initialRoomId && roomEngine.room?.id === initialRoomId.trim().toUpperCase()) {
+      setPlayMode('ROOM');
+      setIsRoomModalOpen(true);
+    }
+  }, [initialRoomId, roomEngine.room?.id]);
 
   // 判斷在房間中的陣營
   const effectiveTeam: 'RED' | 'BLUE' = playMode === 'ROOM'

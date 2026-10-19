@@ -28,7 +28,9 @@ export function useMultiplayerRoom(initialRoomId?: string | null) {
   const [error, setError] = useState<string | null>(null);
   const [isHost, setIsHost] = useState(false);
 
-  const roomIdRef = useRef<string | null>(initialRoomId || null);
+  // 只有成功 JOIN 或建房後才設定，避免以「非成員」身分輪詢
+  const roomIdRef = useRef<string | null>(null);
+  const autoJoinedRef = useRef<string | null>(null);
   const isPollingRef = useRef<boolean>(false);
 
   const updatePlayerName = useCallback((newName: string) => {
@@ -129,6 +131,15 @@ export function useMultiplayerRoom(initialRoomId?: string | null) {
       setIsLoading(false);
     }
   }, [currentUser]);
+
+  // 掃 QR Code / 輸入房號進入時，自動送出 JOIN 正式加入房間
+  useEffect(() => {
+    if (!initialRoomId) return;
+    const id = initialRoomId.trim().toUpperCase();
+    if (autoJoinedRef.current === id) return;
+    autoJoinedRef.current = id;
+    joinRoom(id);
+  }, [initialRoomId, joinRoom]);
 
   // 更新遊戲狀態
   const updateGameState = useCallback(async (newState: any, status?: GameRoom['status'], event?: { type: string; payload: any }) => {

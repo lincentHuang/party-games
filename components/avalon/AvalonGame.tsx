@@ -1,7 +1,7 @@
 // components/avalon/AvalonGame.tsx
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAvalonState } from '@/hooks/useAvalonState';
 import { AvalonSetupView } from './views/AvalonSetupView';
 import { AvalonRoleRevealView } from './views/AvalonRoleRevealView';
@@ -20,6 +20,13 @@ export const AvalonGame: React.FC<AvalonGameProps> = ({ onBackToLobby, initialRo
   const avalon = useAvalonState();
   const roomEngine = useMultiplayerRoom(initialRoomId);
   const [isRoomModalOpen, setIsRoomModalOpen] = useState(false);
+
+  // 以房號／QR Code 加入成功後，顯示房間名單
+  useEffect(() => {
+    if (initialRoomId && roomEngine.room?.id === initialRoomId.trim().toUpperCase()) {
+      setIsRoomModalOpen(true);
+    }
+  }, [initialRoomId, roomEngine.room?.id]);
 
   const handleOpenRoomModal = async () => {
     let r = roomEngine.room;

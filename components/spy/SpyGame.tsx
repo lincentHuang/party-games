@@ -1,7 +1,7 @@
 // components/spy/SpyGame.tsx
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useGameState } from '@/hooks/useGameState';
 import { HomeView } from '@/components/views/HomeView';
 import { SetupView } from '@/components/views/SetupView';
@@ -11,14 +11,16 @@ import { VoteView } from '@/components/views/VoteView';
 import { ResultView } from '@/components/views/ResultView';
 import { WordsView } from '@/components/views/WordsView';
 import { RulesModal } from '@/components/modals/RulesModal';
-import { MultiplayerModal } from '@/components/modals/MultiplayerModal';
+import { QRCodeRoomModal } from '@/components/multiplayer/QRCodeRoomModal';
+import { useMultiplayerRoom } from '@/hooks/useMultiplayerRoom';
 import { SpeechLogModal } from '@/components/modals/SpeechLogModal';
 
 interface SpyGameProps {
   onBackToLobby: () => void;
+  initialRoomId?: string | null;
 }
 
-export const SpyGame: React.FC<SpyGameProps> = ({ onBackToLobby }) => {
+export const SpyGame: React.FC<SpyGameProps> = ({ onBackToLobby, initialRoomId }) => {
   const {
     phase,
     setPhase,
@@ -44,8 +46,26 @@ export const SpyGame: React.FC<SpyGameProps> = ({ onBackToLobby }) => {
   } = useGameState();
 
   const [isRulesOpen, setIsRulesOpen] = useState(false);
-  const [isMultiplayerOpen, setIsMultiplayerOpen] = useState(false);
+  const [isRoomModalOpen, setIsRoomModalOpen] = useState(false);
   const [isSpeechLogOpen, setIsSpeechLogOpen] = useState(false);
+  const roomEngine = useMultiplayerRoom(initialRoomId);
+
+  const handleOpenRoomModal = async () => {
+    let r = roomEngine.room;
+    if (!r) {
+      r = await roomEngine.createRoom('SPY', 12, '誰是間諜派對房');
+    }
+    if (r) {
+      setIsRoomModalOpen(true);
+    }
+  };
+
+  // 以房號／QR Code 加入成功後，顯示房間名單
+  useEffect(() => {
+    if (initialRoomId && roomEngine.room?.id === initialRoomId.trim().toUpperCase()) {
+      setIsRoomModalOpen(true);
+    }
+  }, [initialRoomId, roomEngine.room?.id]);
 
   const handleStartGame = () => {
     startNewGame();
@@ -97,7 +117,7 @@ export const SpyGame: React.FC<SpyGameProps> = ({ onBackToLobby }) => {
         <HomeView
           onSelectPhase={setPhase}
           onOpenRules={() => setIsRulesOpen(true)}
-          onOpenMultiplayer={() => setIsMultiplayerOpen(true)}
+          onOpenMultiplayer={handleOpenRoomModal}
         />
       )}
 
@@ -169,7 +189,16 @@ export const SpyGame: React.FC<SpyGameProps> = ({ onBackToLobby }) => {
       )}
 
       <RulesModal isOpen={isRulesOpen} onClose={() => setIsRulesOpen(false)} />
-      <MultiplayerModal isOpen={isMultiplayerOpen} onClose={() => setIsMultiplayerOpen(false)} />
+      <QRCodeRoomModal
+        isOpen={isRoomModalOpen}
+        onClose={() => setIsRoomModalOpen(false)}
+        room={roomEngine.room}
+        isHost={roomEngine.isHost}
+        onStartGame={() => {
+          setIsRoomModalOpen(false);
+          setPhase('SETUP');
+        }}
+      />
       <SpeechLogModal
         isOpen={isSpeechLogOpen}
         onClose={() => setIsSpeechLogOpen(false)}

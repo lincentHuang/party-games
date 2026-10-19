@@ -1,7 +1,7 @@
 // components/wonders/WondersGame.tsx
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useWondersGame } from '@/hooks/useWondersGame';
 import { CityBoard } from './CityBoard';
 import { DraftingHand } from './DraftingHand';
@@ -19,6 +19,13 @@ export const WondersGame: React.FC<WondersGameProps> = ({ onBackToLobby, initial
   const wonders = useWondersGame();
   const roomEngine = useMultiplayerRoom(initialRoomId);
   const [isRoomModalOpen, setIsRoomModalOpen] = useState(false);
+
+  // 以房號／QR Code 加入成功後，顯示房間名單
+  useEffect(() => {
+    if (initialRoomId && roomEngine.room?.id === initialRoomId.trim().toUpperCase()) {
+      setIsRoomModalOpen(true);
+    }
+  }, [initialRoomId, roomEngine.room?.id]);
 
   const handleOpenRoomModal = async () => {
     let r = roomEngine.room;

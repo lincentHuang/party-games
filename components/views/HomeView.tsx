@@ -83,14 +83,14 @@ export const HomeView: React.FC<HomeViewProps> = ({
         {/* 3. 預留功能：多人房間連線 */}
         <button onClick={handleMultiMode} className="card shrink-0" style={{ textAlign: 'left', cursor: 'pointer', opacity: 0.85 }}>
           <div className="flex-between mb-sm">
-            <span className="badge" style={{ background: 'rgba(255, 255, 255, 0.08)', color: 'var(--fg-muted)' }}>📡 模組預覽</span>
+            <span className="badge" style={{ background: 'rgba(255, 255, 255, 0.08)', color: 'var(--fg-muted)' }}>📡 QR Code 房間</span>
             <span style={{ fontSize: '1.4rem' }}>👥</span>
           </div>
           <h3 style={{ color: '#ffffff', fontSize: '1.1rem', fontWeight: 700, marginBottom: '4px' }}>
             多手機房間連線 (Multi-Device)
           </h3>
           <p style={{ color: 'var(--fg-muted)', fontSize: '0.85rem', lineHeight: 1.45 }}>
-            每人各自使用手機掃碼入房同步看詞。（已預留架構接口，可點擊查看規劃）
+            建立房間後，好友用手機掃碼或輸入房號加入。（目前同步房間名單，看詞仍採單機傳閱）
           </p>
         </button>
       </div>

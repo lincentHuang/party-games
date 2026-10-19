@@ -18,7 +18,7 @@ export default function PartyGamesPage() {
   const [initialRoomId, setInitialRoomId] = useState<string | null>(null);
   const [isJoinModalOpen, setIsJoinModalOpen] = useState(false);
 
-  const { currentUser, joinRoom } = useMultiplayerRoom();
+  const { currentUser, updatePlayerName } = useMultiplayerRoom();
 
   // 監聽網址參數，支援手機掃碼 QR Code 直接進房 (例如 ?game=sonar&room=SONAR-1234)
   useEffect(() => {
@@ -46,6 +46,8 @@ export default function PartyGamesPage() {
       const data = await res.json();
 
       if (data.success && data.room) {
+        // 先存暱稱，遊戲元件掛載時的 hook 會讀到並以此名稱 JOIN
+        if (playerName) updatePlayerName(playerName);
         setInitialRoomId(cleanCode);
         const gameType = data.room.gameType;
 
@@ -90,7 +92,10 @@ export default function PartyGamesPage() {
         )}
 
         {activeGame === 'SPY' && (
-          <SpyGame onBackToLobby={() => setActiveGame('LOBBY')} />
+          <SpyGame
+            onBackToLobby={() => setActiveGame('LOBBY')}
+            initialRoomId={initialRoomId}
+          />
         )}
 
         {activeGame === 'AVALON' && (
