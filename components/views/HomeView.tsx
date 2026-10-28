@@ -52,45 +52,45 @@ export const HomeView: React.FC<HomeViewProps> = ({
 
       {/* 模式選單卡片 */}
       <div className="flex-col gap-md mb-lg shrink-0">
-        {/* 1. 核心首選：單機傳閱派對模式 */}
-        <button onClick={handleSingleMode} className="card card-hero-highlight shrink-0" style={{ textAlign: 'left', cursor: 'pointer' }}>
+        {/* 1. 核心首選：每人一支手機 */}
+        <button onClick={handleMultiMode} className="card card-hero-highlight shrink-0" style={{ textAlign: 'left', cursor: 'pointer' }}>
           <div className="flex-between mb-sm">
-            <span className="badge badge-cyan">🔥 推薦首選模式</span>
-            <span style={{ fontSize: '1.6rem' }}>📱</span>
+            <span className="badge badge-cyan">🔥 推薦</span>
+            <span style={{ fontSize: '1.6rem' }}>👥</span>
           </div>
           <h3 style={{ color: '#ffffff', fontSize: '1.25rem', fontWeight: 800, marginBottom: '6px' }}>
-            單機派對傳閱 (Pass & Play)
+            每人一支手機
           </h3>
           <p style={{ color: 'var(--fg-secondary)', fontSize: '0.9rem', lineHeight: 1.5 }}>
-            只需一台手機！輪流長按指紋看詞，內建法官主持、發言計時、投票放逐與終局復盤。
+            房主建房，大家掃 QR Code 加入。每個人在自己手機看詞、投票，系統自動計票、判勝負。
           </p>
         </button>
 
-        {/* 2. 次要功能：題庫庫房與自訂擴充 */}
+        {/* 2. 單機傳閱 */}
+        <button onClick={handleSingleMode} className="card shrink-0" style={{ textAlign: 'left', cursor: 'pointer' }}>
+          <div className="flex-between mb-sm">
+            <span className="badge badge-easy">📱 只有一支手機</span>
+            <span style={{ fontSize: '1.4rem' }}>🔄</span>
+          </div>
+          <h3 style={{ color: '#ffffff', fontSize: '1.1rem', fontWeight: 700, marginBottom: '4px' }}>
+            單機傳閱
+          </h3>
+          <p style={{ color: 'var(--fg-secondary)', fontSize: '0.85rem', lineHeight: 1.45 }}>
+            一支手機輪流傳著看詞，也可以加入 AI 玩家一起玩。
+          </p>
+        </button>
+
+        {/* 3. 題庫庫房與自訂擴充 */}
         <button onClick={handleWordsManage} className="card shrink-0" style={{ textAlign: 'left', cursor: 'pointer' }}>
           <div className="flex-between mb-sm">
             <span className="badge badge-easy">🗃️ 題庫管理</span>
             <span style={{ fontSize: '1.4rem' }}>📚</span>
           </div>
           <h3 style={{ color: '#ffffff', fontSize: '1.1rem', fontWeight: 700, marginBottom: '4px' }}>
-            題庫庫房與難度自訂
+            題庫與自訂題目
           </h3>
           <p style={{ color: 'var(--fg-secondary)', fontSize: '0.85rem', lineHeight: 1.45 }}>
-            三段難度題目（簡單/中等/困難）、自訂題庫、一鍵多行批次快速匯入/匯出。
-          </p>
-        </button>
-
-        {/* 3. 預留功能：多人房間連線 */}
-        <button onClick={handleMultiMode} className="card shrink-0" style={{ textAlign: 'left', cursor: 'pointer', opacity: 0.85 }}>
-          <div className="flex-between mb-sm">
-            <span className="badge" style={{ background: 'rgba(255, 255, 255, 0.08)', color: 'var(--fg-muted)' }}>📡 QR Code 房間</span>
-            <span style={{ fontSize: '1.4rem' }}>👥</span>
-          </div>
-          <h3 style={{ color: '#ffffff', fontSize: '1.1rem', fontWeight: 700, marginBottom: '4px' }}>
-            多手機房間連線 (Multi-Device)
-          </h3>
-          <p style={{ color: 'var(--fg-muted)', fontSize: '0.85rem', lineHeight: 1.45 }}>
-            建立房間後，好友用手機掃碼或輸入房號加入。（目前同步房間名單，看詞仍採單機傳閱）
+            三段難度題目、自訂題庫、批次匯入匯出。房主的自訂題目也會用在房間對局裡。
           </p>
         </button>
       </div>

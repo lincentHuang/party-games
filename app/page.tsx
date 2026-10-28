@@ -31,7 +31,11 @@ export default function PartyGamesPage() {
         setInitialRoomId(roomParam);
       }
 
-      if (gameParam === 'SPY') setActiveGame('SPY');
+      // 重新整理時若還在誰是間諜的房間裡，直接帶回去
+      let inSpyRoom = false;
+      try { inSpyRoom = !!localStorage.getItem('spy_current_room'); } catch {}
+
+      if (gameParam === 'SPY' || (!gameParam && inSpyRoom)) setActiveGame('SPY');
       else if (gameParam === 'AVALON') setActiveGame('AVALON');
       else if (gameParam === 'SONAR') setActiveGame('SONAR');
       else if (gameParam === 'WONDERS') setActiveGame('WONDERS');
@@ -40,19 +44,26 @@ export default function PartyGamesPage() {
 
   // 處理手動輸入房間代碼加入
   const handleJoinByCode = async (code: string, playerName?: string): Promise<boolean> => {
+    const cleanCode = code.trim().toUpperCase();
+    // 先存暱稱，遊戲元件掛載時會讀到並以此名稱加入
+    if (playerName) updatePlayerName(playerName);
+
+    // 誰是間諜是手機點對點連線，房號都是 SPY- 開頭，直接進遊戲連房主
+    if (cleanCode.startsWith('SPY')) {
+      setInitialRoomId(cleanCode);
+      setActiveGame('SPY');
+      return true;
+    }
+
     try {
-      const cleanCode = code.trim().toUpperCase();
       const res = await fetch(`/api/rooms/${cleanCode}`);
       const data = await res.json();
 
       if (data.success && data.room) {
-        // 先存暱稱，遊戲元件掛載時的 hook 會讀到並以此名稱 JOIN
-        if (playerName) updatePlayerName(playerName);
         setInitialRoomId(cleanCode);
         const gameType = data.room.gameType;
 
-        if (gameType === 'SPY') setActiveGame('SPY');
-        else if (gameType === 'AVALON') setActiveGame('AVALON');
+        if (gameType === 'AVALON') setActiveGame('AVALON');
         else if (gameType === 'SONAR') setActiveGame('SONAR');
         else if (gameType === 'WONDERS') setActiveGame('WONDERS');
 

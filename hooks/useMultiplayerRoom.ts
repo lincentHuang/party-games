@@ -3,26 +3,13 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { GameRoom, RoomPlayer } from '@/lib/roomStore';
-
-function getStoredPlayer(): { id: string; name: string } {
-  if (typeof window === 'undefined') {
-    return { id: 'player_server', name: '玩家' };
-  }
-  let id = localStorage.getItem('party_player_id');
-  if (!id) {
-    id = 'p_' + Math.random().toString(36).substring(2, 9);
-    localStorage.setItem('party_player_id', id);
-  }
-  let name = localStorage.getItem('party_player_name') || '';
-  if (!name) {
-    name = '特工 ' + id.substring(2, 5).toUpperCase();
-    localStorage.setItem('party_player_name', name);
-  }
-  return { id, name };
-}
+import { getStoredPlayer, savePlayerName } from '@/lib/playerIdentity';
 
 export function useMultiplayerRoom(initialRoomId?: string | null) {
-  const [currentUser, setCurrentUser] = useState<{ id: string; name: string }>(getStoredPlayer);
+  const [currentUser, setCurrentUser] = useState<{ id: string; name: string }>(() => {
+    const { id, name } = getStoredPlayer();
+    return { id, name };
+  });
   const [room, setRoom] = useState<GameRoom | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -34,15 +21,9 @@ export function useMultiplayerRoom(initialRoomId?: string | null) {
   const isPollingRef = useRef<boolean>(false);
 
   const updatePlayerName = useCallback((newName: string) => {
-    if (!newName.trim()) return;
-    const clean = newName.trim().substring(0, 12);
-    setCurrentUser(prev => {
-      const updated = { ...prev, name: clean };
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('party_player_name', clean);
-      }
-      return updated;
-    });
+    const clean = savePlayerName(newName);
+    if (!clean) return;
+    setCurrentUser(prev => ({ ...prev, name: clean }));
   }, []);
 
   // 取得最新房間資料

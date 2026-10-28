@@ -11,9 +11,8 @@ import { VoteView } from '@/components/views/VoteView';
 import { ResultView } from '@/components/views/ResultView';
 import { WordsView } from '@/components/views/WordsView';
 import { RulesModal } from '@/components/modals/RulesModal';
-import { QRCodeRoomModal } from '@/components/multiplayer/QRCodeRoomModal';
-import { useMultiplayerRoom } from '@/hooks/useMultiplayerRoom';
 import { SpeechLogModal } from '@/components/modals/SpeechLogModal';
+import { OnlineSpyGame } from '@/components/spy/online/OnlineSpyGame';
 
 interface SpyGameProps {
   onBackToLobby: () => void;
@@ -46,26 +45,20 @@ export const SpyGame: React.FC<SpyGameProps> = ({ onBackToLobby, initialRoomId }
   } = useGameState();
 
   const [isRulesOpen, setIsRulesOpen] = useState(false);
-  const [isRoomModalOpen, setIsRoomModalOpen] = useState(false);
   const [isSpeechLogOpen, setIsSpeechLogOpen] = useState(false);
-  const roomEngine = useMultiplayerRoom(initialRoomId);
+  // ONLINE = 每人一支手機的房間版；LOCAL = 一支手機傳閱
+  const [mode, setMode] = useState<'LOCAL' | 'ONLINE'>(initialRoomId ? 'ONLINE' : 'LOCAL');
 
-  const handleOpenRoomModal = async () => {
-    let r = roomEngine.room;
-    if (!r) {
-      r = await roomEngine.createRoom('SPY', 12, '誰是間諜派對房');
-    }
-    if (r) {
-      setIsRoomModalOpen(true);
-    }
-  };
-
-  // 以房號／QR Code 加入成功後，顯示房間名單
+  // 重新整理後若還在某個房間裡，直接回到房間版
   useEffect(() => {
-    if (initialRoomId && roomEngine.room?.id === initialRoomId.trim().toUpperCase()) {
-      setIsRoomModalOpen(true);
-    }
-  }, [initialRoomId, roomEngine.room?.id]);
+    try {
+      if (localStorage.getItem('spy_current_room')) setMode('ONLINE');
+    } catch {}
+  }, []);
+
+  useEffect(() => {
+    if (initialRoomId) setMode('ONLINE');
+  }, [initialRoomId]);
 
   const handleStartGame = () => {
     startNewGame();
@@ -98,6 +91,10 @@ export const SpyGame: React.FC<SpyGameProps> = ({ onBackToLobby, initialRoomId }
   const currentSpeaker = getCurrentSpeaker();
   const startingSpeaker = players[startingSpeakerIndex];
 
+  if (mode === 'ONLINE') {
+    return <OnlineSpyGame initialRoomId={initialRoomId} onExit={() => setMode('LOCAL')} />;
+  }
+
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
       {/* 頂部快速返回大廳捷徑 (若在 HOME 階段) */}
@@ -117,7 +114,7 @@ export const SpyGame: React.FC<SpyGameProps> = ({ onBackToLobby, initialRoomId }
         <HomeView
           onSelectPhase={setPhase}
           onOpenRules={() => setIsRulesOpen(true)}
-          onOpenMultiplayer={handleOpenRoomModal}
+          onOpenMultiplayer={() => setMode('ONLINE')}
         />
       )}
 
@@ -189,16 +186,6 @@ export const SpyGame: React.FC<SpyGameProps> = ({ onBackToLobby, initialRoomId }
       )}
 
       <RulesModal isOpen={isRulesOpen} onClose={() => setIsRulesOpen(false)} />
-      <QRCodeRoomModal
-        isOpen={isRoomModalOpen}
-        onClose={() => setIsRoomModalOpen(false)}
-        room={roomEngine.room}
-        isHost={roomEngine.isHost}
-        onStartGame={() => {
-          setIsRoomModalOpen(false);
-          setPhase('SETUP');
-        }}
-      />
       <SpeechLogModal
         isOpen={isSpeechLogOpen}
         onClose={() => setIsSpeechLogOpen(false)}

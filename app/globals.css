@@ -1273,3 +1273,10 @@ input:checked + .toggle-slider:before {
   font-weight: 700;
 }
 
+
+/* 停用中的按鈕（例如等待條件達成、非房主看設定） */
+.btn:disabled,
+.chip-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}

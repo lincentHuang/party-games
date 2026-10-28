@@ -24,10 +24,11 @@ export const GameLobbyView: React.FC<GameLobbyViewProps> = ({
       accentClass: 'game-card-accent-spy',
       category: ['ALL', 'HOT', 'DEDUCTION'],
       playerTag: '3 - 12 人 · 心戰推理',
-      badges: ['🔥 聚會首選', '📱 單機傳閱', '🎙️ AI語音計時'],
-      desc: '平民與臥底間諜的暗度陳倉對抗！專利指紋長按防窺看詞，內建法官倒數主持、發言日誌與放逐復盤。',
+      badges: ['🔥 聚會首選', '📡 QR Code 每人一支手機', '📱 也能單機傳閱'],
+      desc: '平民與臥底間諜的心理戰！每個人用自己的手機看詞、投票，大家面對面描述，系統自動計票判勝負。',
       btnText: '開始誰是間諜',
-      hasQr: false
+      hasQr: true,
+      hidden: false
     },
     {
       id: 'AVALON' as const,
@@ -40,7 +41,9 @@ export const GameLobbyView: React.FC<GameLobbyViewProps> = ({
       badges: ['👑 必玩陣營', '🧙‍♂️ 梅林先知', '🗡️ 刺殺逆轉', '📡 支援掃碼'],
       desc: '亞瑟王的正義騎士遠征聖杯！梅林、派西維爾暗護國度，莫甘娜、莫德雷德與刺客步步進逼，好人滿勝還有刺殺梅林逆轉勝！',
       btnText: '進入阿瓦隆',
-      hasQr: true
+      hasQr: true,
+      // 重啟期間先隱藏，等改成多手機版再開放
+      hidden: true
     },
     {
       id: 'SONAR' as const,
@@ -53,7 +56,9 @@ export const GameLobbyView: React.FC<GameLobbyViewProps> = ({
       badges: ['📡 QR Code 掃碼對戰', '🎯 定點魚雷', '🌊 聲納探測', '🤖 支援AI'],
       desc: '紅藍潛艦潛入迷霧深海！手機掃描 QR Code 即時連線，舵手航向移動、大副充能系統、聲納探測敵艦座標並發射致命魚雷！',
       btnText: '📡 掃碼對戰 (魚雷遊戲)',
-      hasQr: true
+      hasQr: true,
+      // 重啟期間先隱藏，等改成多手機版再開放
+      hidden: true
     },
     {
       id: 'WONDERS' as const,
@@ -66,11 +71,14 @@ export const GameLobbyView: React.FC<GameLobbyViewProps> = ({
       badges: ['📡 QR Code 掃碼對戰', '🎴 三大時代輪抽', '⚔️ 軍事衝突', '🗿 奇蹟修造'],
       desc: '穿越古代三大時代！選擇吉薩金字塔、羅德島巨像等奇蹟，輪抽卡牌興建原料、市政、科技與軍事建築，掃碼多人同步決戰霸主！',
       btnText: '📡 掃碼對戰 (7大奇蹟)',
-      hasQr: true
+      hasQr: true,
+      // 重啟期間先隱藏，等改成多手機版再開放
+      hidden: true
     }
   ];
 
-  const filteredGames = games.filter(g => {
+  const visibleGames = games.filter(g => !g.hidden);
+  const filteredGames = visibleGames.filter(g => {
     if (filter === 'ALL') return true;
     if (filter === 'HOT') return g.category.includes('HOT');
     if (filter === 'DEDUCTION') return g.category.includes('DEDUCTION');
@@ -121,10 +129,11 @@ export const GameLobbyView: React.FC<GameLobbyViewProps> = ({
         </div>
       </div>
 
-      {/* 分類篩選標籤 */}
+      {/* 分類篩選標籤（遊戲多於一款才需要） */}
+      {visibleGames.length > 1 && (
       <div className="lobby-filter-row mb-md">
         {[
-          { key: 'ALL', label: '全部遊戲 (4)' },
+          { key: 'ALL', label: `全部遊戲 (${visibleGames.length})` },
           { key: 'HOT', label: '🔥 熱門推薦' },
           { key: 'QR', label: '📡 掃碼對戰' },
           { key: 'DEDUCTION', label: '⚔️ 陣營心戰' },
@@ -143,6 +152,7 @@ export const GameLobbyView: React.FC<GameLobbyViewProps> = ({
           </button>
         ))}
       </div>
+      )}
 
       {/* 遊戲列表卡片清單 */}
       <div className="flex-col gap-md">
