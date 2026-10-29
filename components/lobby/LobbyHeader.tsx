@@ -5,7 +5,7 @@ import React, { useState, useEffect } from 'react';
 import { soundManager } from '@/lib/soundManager';
 
 interface LobbyHeaderProps {
-  currentGame: 'LOBBY' | 'SPY' | 'AVALON' | 'WEREWOLF' | 'ROUNDTABLE' | 'SONAR' | 'WONDERS';
+  currentGame: 'LOBBY' | 'SPY' | 'AVALON' | 'WEREWOLF' | 'ROUNDTABLE' | 'ONENIGHT' | 'PLOT' | 'CODEWORD' | 'SIXTH' | 'SONAR' | 'WONDERS';
   onGoLobby: () => void;
 }
 
@@ -36,6 +36,10 @@ export const LobbyHeader: React.FC<LobbyHeaderProps> = ({ currentGame, onGoLobby
       case 'AVALON': return '⚔️ 阿瓦隆';
       case 'WEREWOLF': return '🐺 狼人殺';
       case 'ROUNDTABLE': return '🌕 圓桌狼人';
+      case 'ONENIGHT': return '🌙 月夜換牌';
+      case 'PLOT': return '👑 宮廷密謀';
+      case 'CODEWORD': return '🔐 密語特工';
+      case 'SIXTH': return '💥 第六張爆炸';
       case 'SONAR': return '🚀 魚雷遊戲';
       case 'WONDERS': return '🏛️ 七大奇蹟';
       default: return '🎉 聚會桌遊大廳';

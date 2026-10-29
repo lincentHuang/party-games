@@ -8,3 +8,4 @@
 - 2026-10-29：阿瓦隆任務失敗按鈕改成跟圓桌狼人一樣不變灰，好人按了只跳提示（components/avalon/online/AvalonRoomGame.tsx）
 - 2026-10-29：修正無法離開房間：改用自訂確認視窗（App 內建瀏覽器會擋 window.confirm），離開後回大廳並清掉網址房號（components/room/PeerRoomScreen.tsx、app/page.tsx）
 - 2026-10-29：新增電腦玩家：阿瓦隆、狼人殺、圓桌狼人的大廳可加入 🤖 電腦補位，由房主手機只依電腦自己的視角決策（hooks/usePeerRoom.ts、lib/bots/）
+- 2026-10-29：新增四款多手機遊戲（皆可加電腦補位）：🌙 月夜換牌（一夜狼人類，ONW-，lib/oneNightEngine.ts、components/onenight/）、👑 宮廷密謀（吹牛質疑身分牌，2–6 人，PLT-，lib/plotEngine.ts、components/plot/）、🔐 密語特工（紅藍分隊猜詞，CDW-，lib/codewordEngine.ts、lib/codewordWords.ts、components/codeword/）、💥 第六張爆炸（同時出牌排列，2–10 人，SIX-，lib/sixthEngine.ts、components/sixth/）；大廳上架並加分類篩選、房號前綴導向（app/page.tsx、components/lobby/）。引擎各自模擬 66–237 局通過，瀏覽器實際各玩到結算一局（密語特工用兩個網址模擬兩位真人隊長）

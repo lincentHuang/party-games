@@ -5,7 +5,7 @@ import React, { useState } from 'react';
 import { soundManager } from '@/lib/soundManager';
 
 interface GameLobbyViewProps {
-  onSelectGame: (game: 'SPY' | 'AVALON' | 'WEREWOLF' | 'ROUNDTABLE' | 'SONAR' | 'WONDERS') => void;
+  onSelectGame: (game: 'SPY' | 'AVALON' | 'WEREWOLF' | 'ROUNDTABLE' | 'ONENIGHT' | 'PLOT' | 'CODEWORD' | 'SIXTH' | 'SONAR' | 'WONDERS') => void;
   onOpenJoinModal: () => void;
 }
 
@@ -69,6 +69,62 @@ export const GameLobbyView: React.FC<GameLobbyViewProps> = ({
       badges: ['🆕 原創融合玩法', '📡 QR Code 每人一支手機', '⚔️ 組隊出任務', '🌙 任務成功夜狼報復'],
       desc: '白天像阿瓦隆組隊出任務，夜晚像狼人殺：任務成功的那晚狼人會報復殺人，預言家逐夜查驗、守衛擋刀。好人三勝後，狼人還能獵殺預言家逆轉！',
       btnText: '進入圓桌狼人',
+      hasQr: true,
+      hidden: false
+    },
+    {
+      id: 'ONENIGHT' as const,
+      title: '月夜換牌',
+      subtitle: 'ONE NIGHT · 一夜決勝',
+      icon: '🌙',
+      accentClass: 'game-card-accent-onenight',
+      category: ['ALL', 'HOT', 'DEDUCTION', 'QR'],
+      playerTag: '3 - 10 人 · 一局 10 分鐘',
+      badges: ['🆕 新遊戲', '📡 QR Code 每人一支手機', '🔄 夜晚偷換身分', '🤖 可加電腦'],
+      desc: '只有一個夜晚！強盜搶牌、搗蛋鬼偷換別人的身分，天亮後連你自己都不確定還是不是原本的角色。討論幾分鐘後一次投票，抓到狼就贏。',
+      btnText: '進入月夜換牌',
+      hasQr: true,
+      hidden: false
+    },
+    {
+      id: 'PLOT' as const,
+      title: '宮廷密謀',
+      subtitle: 'COURT PLOT · 吹牛奪權',
+      icon: '👑',
+      accentClass: 'game-card-accent-plot',
+      category: ['ALL', 'HOT', 'STRATEGY', 'QR'],
+      playerTag: '2 - 6 人 · 人少也能玩',
+      badges: ['🆕 新遊戲', '📡 QR Code 每人一支手機', '🎭 吹牛與質疑', '🤖 可加電腦'],
+      desc: '手上兩張暗牌，想用什麼角色的能力就直接宣稱——反正沒人看得到。被質疑抓包就失去一張牌，兩張都沒了就出局，活到最後的人奪下王位。',
+      btnText: '進入宮廷密謀',
+      hasQr: true,
+      hidden: false
+    },
+    {
+      id: 'CODEWORD' as const,
+      title: '密語特工',
+      subtitle: 'CODEWORD · 紅藍分隊猜詞',
+      icon: '🔐',
+      accentClass: 'game-card-accent-codeword',
+      category: ['ALL', 'HOT', 'TACTICAL', 'QR'],
+      playerTag: '4 - 12 人 · 分隊對戰',
+      badges: ['🆕 新遊戲', '📡 QR Code 每人一支手機', '🗺️ 隊長看得到答案', '💀 小心刺客'],
+      desc: '紅藍兩隊，隊長手機上有 25 個詞的答案地圖，只能給「一個詞＋數字」當提示，讓隊友猜出自己隊的特工。翻到刺客直接輸！',
+      btnText: '進入密語特工',
+      hasQr: true,
+      hidden: false
+    },
+    {
+      id: 'SIXTH' as const,
+      title: '第六張爆炸',
+      subtitle: 'SIXTH CARD · 同時出牌',
+      icon: '💥',
+      accentClass: 'game-card-accent-sixth',
+      category: ['ALL', 'STRATEGY', 'QR'],
+      playerTag: '2 - 10 人 · 規則一分鐘學會',
+      badges: ['🆕 新遊戲', '📡 QR Code 每人一支手機', '🃏 大家同時出牌', '🤖 可加電腦'],
+      desc: '所有人同時出一張數字牌，由小到大排進桌上四列。誰放下了某一列的第六張，就得把整列炸彈收下來！炸彈最少的人獲勝，長輩小孩都能玩。',
+      btnText: '進入第六張爆炸',
       hasQr: true,
       hidden: false
     },
@@ -156,13 +212,15 @@ export const GameLobbyView: React.FC<GameLobbyViewProps> = ({
         </div>
       </div>
 
-      {/* 分類篩選標籤（目前幾款都是陣營推理，遊戲變多再顯示） */}
+      {/* 分類篩選標籤（遊戲超過三款才顯示） */}
       {visibleGames.length > 3 && (
       <div className="lobby-filter-row mb-md">
         {[
           { key: 'ALL', label: `全部遊戲 (${visibleGames.length})` },
           { key: 'HOT', label: '🔥 熱門推薦' },
-          { key: 'DEDUCTION', label: '⚔️ 陣營心戰' }
+          { key: 'DEDUCTION', label: '⚔️ 陣營心戰' },
+          { key: 'STRATEGY', label: '🃏 卡牌對戰' },
+          { key: 'TACTICAL', label: '👥 分隊猜詞' }
         ].map(item => (
           <button
             key={item.key}
@@ -239,6 +297,10 @@ export const GameLobbyView: React.FC<GameLobbyViewProps> = ({
                             game.id === 'AVALON' ? 'linear-gradient(135deg, #3b82f6, #1d4ed8)' :
                             game.id === 'WEREWOLF' ? 'linear-gradient(135deg, #7c3aed, #4c1d95)' :
                             game.id === 'ROUNDTABLE' ? 'linear-gradient(135deg, #0ea5e9, #6d28d9)' :
+                            game.id === 'ONENIGHT' ? 'linear-gradient(135deg, #6366f1, #1e1b4b)' :
+                            game.id === 'PLOT' ? 'linear-gradient(135deg, #eab308, #a16207)' :
+                            game.id === 'CODEWORD' ? 'linear-gradient(135deg, #ef4444, #2563eb)' :
+                            game.id === 'SIXTH' ? 'linear-gradient(135deg, #f97316, #c2410c)' :
                             game.id === 'SONAR' ? 'linear-gradient(135deg, #10b981, #047857)' :
                             'linear-gradient(135deg, #f59e0b, #b45309)'
               }}

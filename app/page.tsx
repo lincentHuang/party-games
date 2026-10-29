@@ -8,20 +8,28 @@ import { SpyGame } from '@/components/spy/SpyGame';
 import { OnlineAvalonGame } from '@/components/avalon/online/OnlineAvalonGame';
 import { OnlineWerewolfGame } from '@/components/werewolf/OnlineWerewolfGame';
 import { OnlineRoundtableGame } from '@/components/roundtable/OnlineRoundtableGame';
+import { OnlineOneNightGame } from '@/components/onenight/OnlineOneNightGame';
+import { OnlinePlotGame } from '@/components/plot/OnlinePlotGame';
+import { OnlineCodewordGame } from '@/components/codeword/OnlineCodewordGame';
+import { OnlineSixthGame } from '@/components/sixth/OnlineSixthGame';
 import { SonarGame } from '@/components/sonar/SonarGame';
 import { WondersGame } from '@/components/wonders/WondersGame';
 import { JoinRoomModal } from '@/components/multiplayer/JoinRoomModal';
 import { useMultiplayerRoom } from '@/hooks/useMultiplayerRoom';
 import { roomCodePrefix } from '@/hooks/usePeerRoom';
 
-type ActiveGame = 'LOBBY' | 'SPY' | 'AVALON' | 'WEREWOLF' | 'ROUNDTABLE' | 'SONAR' | 'WONDERS';
+type ActiveGame = 'LOBBY' | 'SPY' | 'AVALON' | 'WEREWOLF' | 'ROUNDTABLE' | 'ONENIGHT' | 'PLOT' | 'CODEWORD' | 'SIXTH' | 'SONAR' | 'WONDERS';
 
 // 手機點對點的遊戲：房號前綴、localStorage 前綴（重新整理時用來回到房間）
 const PEER_GAMES: { game: ActiveGame; prefix: string; storageKey: string }[] = [
   { game: 'SPY', prefix: 'SPY', storageKey: 'spy' },
   { game: 'AVALON', prefix: 'AVA', storageKey: 'avalon' },
   { game: 'WEREWOLF', prefix: 'WLF', storageKey: 'werewolf' },
-  { game: 'ROUNDTABLE', prefix: 'RTW', storageKey: 'roundtable' }
+  { game: 'ROUNDTABLE', prefix: 'RTW', storageKey: 'roundtable' },
+  { game: 'ONENIGHT', prefix: 'ONW', storageKey: 'onenight' },
+  { game: 'PLOT', prefix: 'PLT', storageKey: 'plot' },
+  { game: 'CODEWORD', prefix: 'CDW', storageKey: 'codeword' },
+  { game: 'SIXTH', prefix: 'SIX', storageKey: 'sixth' }
 ];
 
 export default function PartyGamesPage() {
@@ -52,6 +60,10 @@ export default function PartyGamesPage() {
       else if (gameParam === 'AVALON') setActiveGame('AVALON');
       else if (gameParam === 'WEREWOLF') setActiveGame('WEREWOLF');
       else if (gameParam === 'ROUNDTABLE') setActiveGame('ROUNDTABLE');
+      else if (gameParam === 'ONENIGHT') setActiveGame('ONENIGHT');
+      else if (gameParam === 'PLOT') setActiveGame('PLOT');
+      else if (gameParam === 'CODEWORD') setActiveGame('CODEWORD');
+      else if (gameParam === 'SIXTH') setActiveGame('SIXTH');
       else if (!gameParam && resumeGame) setActiveGame(resumeGame);
       else if (gameParam === 'SONAR') setActiveGame('SONAR');
       else if (gameParam === 'WONDERS') setActiveGame('WONDERS');
@@ -144,6 +156,34 @@ export default function PartyGamesPage() {
 
         {activeGame === 'ROUNDTABLE' && (
           <OnlineRoundtableGame
+            onExit={goLobby}
+            initialRoomId={initialRoomId}
+          />
+        )}
+
+        {activeGame === 'ONENIGHT' && (
+          <OnlineOneNightGame
+            onExit={goLobby}
+            initialRoomId={initialRoomId}
+          />
+        )}
+
+        {activeGame === 'PLOT' && (
+          <OnlinePlotGame
+            onExit={goLobby}
+            initialRoomId={initialRoomId}
+          />
+        )}
+
+        {activeGame === 'CODEWORD' && (
+          <OnlineCodewordGame
+            onExit={goLobby}
+            initialRoomId={initialRoomId}
+          />
+        )}
+
+        {activeGame === 'SIXTH' && (
+          <OnlineSixthGame
             onExit={goLobby}
             initialRoomId={initialRoomId}
           />
