@@ -59,7 +59,7 @@ export const AvalonRoomLobby: React.FC<AvalonRoomLobbyProps> = ({ view, isBusy, 
           ⚠️ {view.lastNotice}
         </div>
       )}
-      <RoomPlayerList view={view} onKick={id => onAct({ action: 'KICK', targetId: id })} />
+      <RoomPlayerList view={view} onKick={id => onAct({ action: 'KICK', targetId: id })} onAddBot={() => onAct({ action: 'ADD_BOT' })} />
 
       {/* 人數配置預覽 */}
       <div className="card shrink-0 mb-md" style={{ padding: '14px 16px' }}>

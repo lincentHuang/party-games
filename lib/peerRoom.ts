@@ -19,6 +19,16 @@ export function addPeerPlayer<R extends PeerHostRoomBase>(
   return { room };
 }
 
+const BOT_NAMES = ['阿福', '小美', '大熊', '阿呆', '豆豆', '胖虎', '小葵', '阿吉', '咪咪', '老王', '小黑', '球球'];
+
+// 電腦玩家：名字前面加 🤖，所有畫面一看就知道是電腦
+export function nextBotPlayer(room: PeerHostRoomBase) {
+  const used = new Set(room.players.map(p => p.name));
+  const name = BOT_NAMES.map(n => `🤖 ${n}`).find(n => !used.has(n)) || `🤖 電腦${room.players.length + 1}`;
+  // secret 故意短於 16 字，真人的 hello 一律會被擋，沒人能冒用電腦的身分
+  return { id: `bot-${Math.random().toString(36).slice(2, 10)}`, name, secret: 'bot' };
+}
+
 export function shuffle<T>(arr: T[]): T[] {
   const a = [...arr];
   for (let i = a.length - 1; i > 0; i--) {

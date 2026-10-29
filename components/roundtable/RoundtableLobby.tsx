@@ -58,7 +58,7 @@ export const RoundtableLobby: React.FC<RoundtableLobbyProps> = ({ view, isBusy, 
   return (
     <div className="view-container view-enter">
       <RoomInviteCard view={view} gameParam="roundtable" />
-      <RoomPlayerList view={view} onKick={id => onAct({ action: 'KICK', targetId: id })} />
+      <RoomPlayerList view={view} onKick={id => onAct({ action: 'KICK', targetId: id })} onAddBot={() => onAct({ action: 'ADD_BOT' })} />
 
       {/* 怎麼玩 */}
       <div className="card shrink-0 mb-md" style={{ padding: '12px 16px' }}>

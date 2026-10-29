@@ -7,11 +7,13 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import type { DataConnection, Peer as PeerInstance } from 'peerjs';
 import { getStoredPlayer, hasChosenName, savePlayerName } from '@/lib/playerIdentity';
+import { nextBotPlayer } from '@/lib/peerRoom';
 import { PeerActionBase, PeerGameEngine, PeerHostRoomBase, PeerMutation, PeerViewBase } from '@/types/peerRoom';
 
 const CODE_CHARS = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
 const RETRY_MS = 2500;
 const GUEST_MAX_RETRIES = 48; // 約 2 分鐘連不到房主就放棄
+const BOT_DELAY_MS = [900, 2400]; // 電腦玩家每一步隨機等一下，像真人在想
 
 type PeerMessage =
   | { type: 'hello'; id: string; secret: string; name: string }
@@ -119,6 +121,8 @@ export function usePeerRoom<R extends PeerHostRoomBase, V extends PeerViewBase, 
   // 房主專用
   const roomRef = useRef<R | null>(null);
   const connsRef = useRef<Map<string, DataConnection>>(new Map());
+  const botTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const scheduleBotsRef = useRef<() => void>(() => {});
 
   // 玩家專用
   const hostConnRef = useRef<DataConnection | null>(null);
@@ -145,6 +149,8 @@ export function usePeerRoom<R extends PeerHostRoomBase, V extends PeerViewBase, 
   const teardown = useCallback((message: string | null, keepSession = false) => {
     genRef.current++;
     if (retryTimerRef.current) clearTimeout(retryTimerRef.current);
+    if (botTimerRef.current) clearTimeout(botTimerRef.current);
+    botTimerRef.current = null;
     connsRef.current.forEach(c => c.close());
     connsRef.current.clear();
     hostConnRef.current?.close();
@@ -170,17 +176,24 @@ export function usePeerRoom<R extends PeerHostRoomBase, V extends PeerViewBase, 
 
   // ───────── 房主 ─────────
 
+  const hostOnlineIds = useCallback((room: R) => {
+    const online = new Set<string>([room.hostId]);
+    connsRef.current.forEach((c, id) => { if (c.open) online.add(id); });
+    room.players.forEach(p => { if (p.isBot) online.add(p.id); });
+    return online;
+  }, []);
+
   const hostPublish = useCallback(() => {
     const room = roomRef.current;
     if (!room) return;
-    const online = new Set<string>([room.hostId]);
-    connsRef.current.forEach((c, id) => { if (c.open) online.add(id); });
+    const online = hostOnlineIds(room);
     writeJSON(HOST_ROOM_KEY, room);
     applyView(engine.buildView(room, room.hostId, online));
     connsRef.current.forEach((conn, id) => {
       if (conn.open) conn.send({ type: 'view', view: engine.buildView(room, id, online) } satisfies PeerMessage);
     });
-  }, [applyView, engine, HOST_ROOM_KEY]);
+    scheduleBotsRef.current();
+  }, [applyView, engine, HOST_ROOM_KEY, hostOnlineIds]);
 
   const hostMutate = useCallback((fn: (room: R) => PeerMutation<R>): string | null => {
     const current = roomRef.current;
@@ -191,6 +204,39 @@ export function usePeerRoom<R extends PeerHostRoomBase, V extends PeerViewBase, 
     hostPublish();
     return null;
   }, [hostPublish]);
+
+  // 電腦玩家：每次狀態變動後排一次，輪流問每個電腦要不要動作，一次只做一步
+  scheduleBotsRef.current = () => {
+    const room = roomRef.current;
+    if (botTimerRef.current || !engine.botAction || !room?.players.some(p => p.isBot)) return;
+    const [min, max] = BOT_DELAY_MS;
+    botTimerRef.current = setTimeout(() => {
+      botTimerRef.current = null;
+      const current = roomRef.current;
+      if (!current || roleRef.current !== 'host' || !engine.botAction) return;
+      const online = hostOnlineIds(current);
+      const bots = current.players.filter(p => p.isBot).sort(() => Math.random() - 0.5);
+      for (const bot of bots) {
+        const action = engine.botAction(engine.buildView(current, bot.id, online));
+        if (!action) continue;
+        const before = JSON.stringify(current);
+        const result = engine.applyAction(structuredClone(current), bot.id, action);
+        // 失敗或沒改變任何東西就換下一個電腦，避免同一步無限重來
+        if ('error' in result || JSON.stringify(result.room) === before) continue;
+        roomRef.current = { ...result.room, version: current.version + 1 };
+        hostPublish();
+        return;
+      }
+    }, min + Math.random() * (max - min));
+  };
+
+  const hostAddBot = useCallback((): string | null => hostMutate(room => {
+    const result = engine.addPlayer(room, nextBotPlayer(room));
+    if ('error' in result) return result;
+    const added = result.room.players[result.room.players.length - 1];
+    if (added) added.isBot = true;
+    return result;
+  }), [hostMutate, engine]);
 
   const hostKick = useCallback((playerId: string) => {
     const conn = connsRef.current.get(playerId);
@@ -448,7 +494,9 @@ export function usePeerRoom<R extends PeerHostRoomBase, V extends PeerViewBase, 
     if (roleRef.current === 'host') {
       const room = roomRef.current;
       if (!room) return false;
-      const err = hostMutate(r => engine.applyAction(r, room.hostId, action));
+      const err = action.action === 'ADD_BOT'
+        ? hostAddBot()
+        : hostMutate(r => engine.applyAction(r, room.hostId, action));
       if (!err && action.action === 'KICK' && action.targetId) hostKick(action.targetId);
       setError(err);
       return !err;
@@ -472,7 +520,7 @@ export function usePeerRoom<R extends PeerHostRoomBase, V extends PeerViewBase, 
     setIsBusy(false);
     setError(result.ok ? null : result.message || '操作失敗');
     return result.ok;
-  }, [hostMutate, hostKick, engine]);
+  }, [hostMutate, hostKick, hostAddBot, engine]);
 
   const leaveRoom = useCallback(async () => {
     if (roleRef.current === 'host') {

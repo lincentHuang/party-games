@@ -62,7 +62,8 @@ export const RoomInviteCard: React.FC<{ view: PeerViewBase; gameParam: string }>
 };
 
 // 已加入的玩家名單（房主可移出）
-export const RoomPlayerList: React.FC<{ view: PeerViewBase; onKick: (id: string) => void }> = ({ view, onKick }) => (
+// onAddBot：有給才顯示「加入電腦玩家」（房主、大廳階段）
+export const RoomPlayerList: React.FC<{ view: PeerViewBase; onKick: (id: string) => void; onAddBot?: () => void }> = ({ view, onKick, onAddBot }) => (
   <div className="card shrink-0 mb-md" style={{ padding: '14px' }}>
     <div className="flex-between mb-sm">
       <span style={{ fontWeight: 800, color: 'var(--fg-pure)' }}>👥 已加入 {view.players.length} 人</span>
@@ -85,5 +86,15 @@ export const RoomPlayerList: React.FC<{ view: PeerViewBase; onKick: (id: string)
         </div>
       ))}
     </div>
+    {onAddBot && view.me.isHost && view.phase === 'LOBBY' && (
+      <>
+        <button onClick={onAddBot} className="btn btn-secondary btn-full" style={{ marginTop: '10px' }}>
+          🤖 加入電腦玩家
+        </button>
+        <p style={{ color: 'var(--fg-muted)', fontSize: '0.78rem', marginTop: '6px', textAlign: 'center' }}>
+          人數不夠時用電腦補位，由這支手機代為操作，不會發言
+        </p>
+      </>
+    )}
   </div>
 );

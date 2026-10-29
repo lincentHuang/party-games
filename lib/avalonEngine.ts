@@ -4,6 +4,7 @@
  * 每支手機只拿到自己看得到的資訊（buildAvalonView）。
  */
 
+import { avalonBotAction } from '@/lib/bots/avalonBot';
 import { ALIGNMENT_COUNT_BY_PLAYERS, generateQuests } from '@/lib/avalonRules';
 import { addPeerPlayer, shuffle } from '@/lib/peerRoom';
 import { AvalonAlignment, AvalonRole } from '@/types/avalon';
@@ -508,5 +509,6 @@ export const avalonEngine: PeerGameEngine<AvalonHostRoom, AvalonRoomView, Avalon
   createRoom: (id, host) => ({ id, hostId: host.id, version: 1, players: [host], gameState: createInitialAvalonState() }),
   addPlayer: addAvalonPlayer,
   applyAction: applyAvalonAction,
-  buildView: buildAvalonView
+  buildView: buildAvalonView,
+  botAction: avalonBotAction
 };

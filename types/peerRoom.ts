@@ -8,6 +8,7 @@ export interface PeerRoomPlayer {
   name: string;
   isHost: boolean;
   secret: string; // 只存在房主手機，用來確認重新連線的是本人
+  isBot?: boolean; // 電腦玩家：由房主手機代為操作，永遠算在線
 }
 
 export interface PeerHostRoomBase {
@@ -42,4 +43,7 @@ export interface PeerGameEngine<R extends PeerHostRoomBase, V extends PeerViewBa
   addPlayer: (room: R, player: { id: string; name: string; secret: string }) => PeerMutation<R>;
   applyAction: (room: R, playerId: string, action: A) => PeerMutation<R>;
   buildView: (room: R, playerId: string, onlineIds: Set<string>) => V;
+  // 電腦玩家：只看自己的視角決定下一步，沒事可做就回傳 null。
+  // 有提供這個函式的遊戲，大廳才會出現「加入電腦玩家」
+  botAction?: (view: V) => A | null;
 }

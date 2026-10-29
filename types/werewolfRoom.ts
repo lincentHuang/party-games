@@ -220,4 +220,5 @@ export type WerewolfAction =
   | { action: 'CONTINUE' }
   | { action: 'BACK_TO_LOBBY' }
   | { action: 'KICK'; targetId: string }
-  | { action: 'LEAVE' };
+  | { action: 'LEAVE' }
+  | { action: 'ADD_BOT' }; // 只有房主，由連線層處理，不會進規則引擎

@@ -8,6 +8,7 @@
  */
 
 import { addPeerPlayer, shuffle } from '@/lib/peerRoom';
+import { werewolfBotAction } from '@/lib/bots/werewolfBot';
 import { PeerGameEngine, PeerMutation } from '@/types/peerRoom';
 import {
   DeathCause,
@@ -863,7 +864,8 @@ export const werewolfEngine: PeerGameEngine<WerewolfHostRoom, WerewolfRoomView, 
   createRoom: (id, host) => ({ id, hostId: host.id, version: 1, players: [host], gameState: createInitialWerewolfState(1) }),
   addPlayer: addWerewolfPlayer,
   applyAction: applyWerewolfAction,
-  buildView: buildWerewolfView
+  buildView: buildWerewolfView,
+  botAction: werewolfBotAction
 };
 
 export { teamOf };

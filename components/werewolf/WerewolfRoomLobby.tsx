@@ -52,7 +52,7 @@ export const WerewolfRoomLobby: React.FC<WerewolfRoomLobbyProps> = ({ view, isBu
   return (
     <div className="view-container view-enter">
       <RoomInviteCard view={view} gameParam="werewolf" />
-      <RoomPlayerList view={view} onKick={id => onAct({ action: 'KICK', targetId: id })} />
+      <RoomPlayerList view={view} onKick={id => onAct({ action: 'KICK', targetId: id })} onAddBot={() => onAct({ action: 'ADD_BOT' })} />
 
       <div className="flex-col gap-md shrink-0 mb-md">
         <div className="card text-center" style={{ padding: '14px 16px' }}>

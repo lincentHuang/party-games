@@ -11,6 +11,7 @@
  */
 
 import { ALIGNMENT_COUNT_BY_PLAYERS, generateQuests } from '@/lib/avalonRules';
+import { roundtableBotAction } from '@/lib/bots/roundtableBot';
 import { addPeerPlayer, shuffle } from '@/lib/peerRoom';
 import { PeerGameEngine, PeerMutation } from '@/types/peerRoom';
 import {
@@ -896,5 +897,6 @@ export const roundtableEngine: PeerGameEngine<RoundtableHostRoom, RoundtableRoom
   createRoom: (id, host) => ({ id, hostId: host.id, version: 1, players: [host], gameState: createInitialRtState() }),
   addPlayer: addRoundtablePlayer,
   applyAction: applyRoundtableAction,
-  buildView: buildRoundtableView
+  buildView: buildRoundtableView,
+  botAction: roundtableBotAction
 };

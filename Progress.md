@@ -7,3 +7,4 @@
 - 2026-10-29：新增原創融合遊戲「圓桌狼人」（阿瓦隆＋狼人殺，5–10 人）：白天組隊出任務、任務成功的夜晚狼人報復殺人、預言家逐夜查驗、守衛／獵人／隱狼可選、死者仍可表決、好人三勝後狼人可最後獵殺預言家；大廳上架、房號 RTW- 導向（lib/roundtableEngine.ts、types/roundtableRoom.ts、components/roundtable/）。引擎模擬 18 個情境通過，瀏覽器 5 分頁實際連線跑到第 2 輪
 - 2026-10-29：阿瓦隆任務失敗按鈕改成跟圓桌狼人一樣不變灰，好人按了只跳提示（components/avalon/online/AvalonRoomGame.tsx）
 - 2026-10-29：修正無法離開房間：改用自訂確認視窗（App 內建瀏覽器會擋 window.confirm），離開後回大廳並清掉網址房號（components/room/PeerRoomScreen.tsx、app/page.tsx）
+- 2026-10-29：新增電腦玩家：阿瓦隆、狼人殺、圓桌狼人的大廳可加入 🤖 電腦補位，由房主手機只依電腦自己的視角決策（hooks/usePeerRoom.ts、lib/bots/）
