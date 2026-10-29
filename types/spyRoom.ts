@@ -4,6 +4,7 @@
  */
 
 import { Difficulty, Role, WordPair } from '@/types/game';
+import { PeerHostRoomBase, PeerRoomPlayer } from '@/types/peerRoom';
 
 export type SpyRoomPhase = 'LOBBY' | 'REVEAL' | 'DESCRIBE' | 'VOTE' | 'ELIMINATED' | 'RESULT';
 
@@ -53,19 +54,10 @@ export interface SpyRoomState {
   recentWords: string[];
 }
 
-export interface SpyRoomPlayer {
-  id: string;
-  name: string;
-  isHost: boolean;
-  secret: string; // 只存在房主手機，用來確認重新連線的是本人
-}
+export type SpyRoomPlayer = PeerRoomPlayer;
 
 // 房主手機上的完整房間
-export interface SpyHostRoom {
-  id: string;
-  hostId: string;
-  version: number;
-  players: SpyRoomPlayer[];
+export interface SpyHostRoom extends PeerHostRoomBase {
   gameState: SpyRoomState;
 }
 

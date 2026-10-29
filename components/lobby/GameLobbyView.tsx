@@ -5,7 +5,7 @@ import React, { useState } from 'react';
 import { soundManager } from '@/lib/soundManager';
 
 interface GameLobbyViewProps {
-  onSelectGame: (game: 'SPY' | 'AVALON' | 'SONAR' | 'WONDERS') => void;
+  onSelectGame: (game: 'SPY' | 'AVALON' | 'WEREWOLF' | 'ROUNDTABLE' | 'SONAR' | 'WONDERS') => void;
   onOpenJoinModal: () => void;
 }
 
@@ -37,13 +37,40 @@ export const GameLobbyView: React.FC<GameLobbyViewProps> = ({
       icon: '⚔️',
       accentClass: 'game-card-accent-avalon',
       category: ['ALL', 'HOT', 'DEDUCTION', 'QR'],
-      playerTag: '5 - 10 人 · 經典身份桌遊',
-      badges: ['👑 必玩陣營', '🧙‍♂️ 梅林先知', '🗡️ 刺殺逆轉', '📡 支援掃碼'],
-      desc: '亞瑟王的正義騎士遠征聖杯！梅林、派西維爾暗護國度，莫甘娜、莫德雷德與刺客步步進逼，好人滿勝還有刺殺梅林逆轉勝！',
+      playerTag: '5 - 10 人 · 陣營推理',
+      badges: ['📡 QR Code 每人一支手機', '🧙‍♂️ 梅林先知', '🗡️ 刺殺逆轉', '🌊 湖中仙女'],
+      desc: '亞瑟王的騎士出征聖杯！每個人用手機看身分、秘密投票組隊、暗中出任務，大家吵誰是壞人就好。好人三勝後還有刺客刺殺梅林的逆轉！',
       btnText: '進入阿瓦隆',
       hasQr: true,
-      // 重啟期間先隱藏，等改成多手機版再開放
-      hidden: true
+      hidden: false
+    },
+    {
+      id: 'WEREWOLF' as const,
+      title: '狼人殺',
+      subtitle: 'WEREWOLF · 手機當法官',
+      icon: '🐺',
+      accentClass: 'game-card-accent-werewolf',
+      category: ['ALL', 'HOT', 'DEDUCTION', 'QR'],
+      playerTag: '6 - 12 人 · 天黑請閉眼',
+      badges: ['📡 QR Code 每人一支手機', '🤖 不用真人法官', '🔮 預言家・女巫・獵人・守衛'],
+      desc: '手機自動當法官：夜晚每個人都在自己手機上行動，狼人同步選刀、神職秘密施法，天亮宣告死訊，白天輪流發言投票放逐。所有人都能下場玩！',
+      btnText: '進入狼人殺',
+      hasQr: true,
+      hidden: false
+    },
+    {
+      id: 'ROUNDTABLE' as const,
+      title: '圓桌狼人',
+      subtitle: 'AVALON × WEREWOLF · 融合版',
+      icon: '🌕',
+      accentClass: 'game-card-accent-roundtable',
+      category: ['ALL', 'HOT', 'DEDUCTION', 'QR'],
+      playerTag: '5 - 10 人 · 白天出征夜晚獵殺',
+      badges: ['🆕 原創融合玩法', '📡 QR Code 每人一支手機', '⚔️ 組隊出任務', '🌙 任務成功夜狼報復'],
+      desc: '白天像阿瓦隆組隊出任務，夜晚像狼人殺：任務成功的那晚狼人會報復殺人，預言家逐夜查驗、守衛擋刀。好人三勝後，狼人還能獵殺預言家逆轉！',
+      btnText: '進入圓桌狼人',
+      hasQr: true,
+      hidden: false
     },
     {
       id: 'SONAR' as const,
@@ -129,16 +156,13 @@ export const GameLobbyView: React.FC<GameLobbyViewProps> = ({
         </div>
       </div>
 
-      {/* 分類篩選標籤（遊戲多於一款才需要） */}
-      {visibleGames.length > 1 && (
+      {/* 分類篩選標籤（目前幾款都是陣營推理，遊戲變多再顯示） */}
+      {visibleGames.length > 3 && (
       <div className="lobby-filter-row mb-md">
         {[
           { key: 'ALL', label: `全部遊戲 (${visibleGames.length})` },
           { key: 'HOT', label: '🔥 熱門推薦' },
-          { key: 'QR', label: '📡 掃碼對戰' },
-          { key: 'DEDUCTION', label: '⚔️ 陣營心戰' },
-          { key: 'TACTICAL', label: '🚀 即時海戰' },
-          { key: 'STRATEGY', label: '🏛️ 文明輪抽' }
+          { key: 'DEDUCTION', label: '⚔️ 陣營心戰' }
         ].map(item => (
           <button
             key={item.key}
@@ -213,6 +237,8 @@ export const GameLobbyView: React.FC<GameLobbyViewProps> = ({
                 fontSize: '1rem',
                 background: game.id === 'SPY' ? 'linear-gradient(135deg, var(--accent-magenta), #be123c)' :
                             game.id === 'AVALON' ? 'linear-gradient(135deg, #3b82f6, #1d4ed8)' :
+                            game.id === 'WEREWOLF' ? 'linear-gradient(135deg, #7c3aed, #4c1d95)' :
+                            game.id === 'ROUNDTABLE' ? 'linear-gradient(135deg, #0ea5e9, #6d28d9)' :
                             game.id === 'SONAR' ? 'linear-gradient(135deg, #10b981, #047857)' :
                             'linear-gradient(135deg, #f59e0b, #b45309)'
               }}

@@ -6,6 +6,8 @@
 
 import { DEFAULT_WORD_PAIRS } from '@/lib/wordsData';
 import { Difficulty, Role, VictoryStatus, WordPair } from '@/types/game';
+import { addPeerPlayer } from '@/lib/peerRoom';
+import { PeerGameEngine } from '@/types/peerRoom';
 import { SpyAction, SpyHostRoom, SpyRoomConfig, SpyRoomState, SpyRoomView, SpySeat } from '@/types/spyRoom';
 
 export type SpyMutation = { room: SpyHostRoom } | { error: string };
@@ -394,15 +396,7 @@ export function applySpyAction(room: SpyHostRoom, playerId: string, input: SpyAc
 
 // 新玩家加入或舊玩家重新連線；對局中才加入的人當旁觀者，下一局才有座位
 export function addSpyPlayer(room: SpyHostRoom, player: { id: string; name: string; secret: string }): SpyMutation {
-  const existing = room.players.find(p => p.id === player.id);
-  if (existing) {
-    if (existing.secret !== player.secret) return { error: '玩家身分驗證失敗' };
-    if (player.name) existing.name = player.name;
-    return { room };
-  }
-  if (room.players.length >= SPY_MAX_PLAYERS) return { error: '房間已滿員！' };
-  room.players.push({ id: player.id, name: player.name || `玩家 ${room.players.length + 1}`, isHost: false, secret: player.secret });
-  return { room };
+  return addPeerPlayer(room, player, SPY_MAX_PLAYERS);
 }
 
 export function buildSpyView(room: SpyHostRoom, playerId: string, onlineIds: Set<string>): SpyRoomView {
@@ -459,3 +453,12 @@ export function buildSpyView(room: SpyHostRoom, playerId: string, onlineIds: Set
     wordPair: isOver ? state.wordPair : null
   };
 }
+
+export const spyEngine: PeerGameEngine<SpyHostRoom, SpyRoomView, SpyAction> = {
+  codePrefix: 'SPY',
+  storageKey: 'spy',
+  createRoom: (id, host) => ({ id, hostId: host.id, version: 1, players: [host], gameState: createInitialSpyState() }),
+  addPlayer: addSpyPlayer,
+  applyAction: applySpyAction,
+  buildView: buildSpyView
+};

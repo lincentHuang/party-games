@@ -38,6 +38,12 @@ export const ROLE_INFO: Record<AvalonRole, { name: string; alignment: AvalonAlig
     desc: '叛國邪神首領。身份隱蔽，即便梅林也無法看穿莫德雷德的邪惡身份。',
     icon: '👿'
   },
+  MINION: {
+    name: '莫德雷德的爪牙',
+    alignment: 'EVIL',
+    desc: '普通的邪惡爪牙。沒有特殊能力，認得其他邪惡同夥（奧伯倫除外），一起破壞任務。',
+    icon: '😈'
+  },
   OBERON: {
     name: '奧伯倫',
     alignment: 'EVIL',
@@ -94,8 +100,8 @@ export function dealAvalonRoles(config: AvalonConfig): AvalonPlayer[] {
   if (config.useMordred && evilRoles.length < alignment.evil) evilRoles.push('MORDRED');
   if (config.useOberon && evilRoles.length < alignment.evil) evilRoles.push('OBERON');
   while (evilRoles.length < alignment.evil) {
-    // 預設為普通爪牙或莫甘娜
-    evilRoles.push('MORGANA');
+    // 補滿名額用普通爪牙
+    evilRoles.push('MINION');
   }
 
   const allRoles: { role: AvalonRole; alignment: AvalonAlignment }[] = [
@@ -144,7 +150,8 @@ export function getPlayerVisions(player: AvalonPlayer, allPlayers: AvalonPlayer[
     }
     case 'ASSASSIN':
     case 'MORGANA':
-    case 'MORDRED': {
+    case 'MORDRED':
+    case 'MINION': {
       // 邪惡同夥互認（排除奧伯倫）
       const evilPartners = allPlayers.filter(p =>
         p.alignment === 'EVIL' && p.id !== player.id && p.role !== 'OBERON'

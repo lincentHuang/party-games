@@ -7,7 +7,8 @@ export type AvalonRole =
   | 'ASSASSIN'        // 刺客 (邪惡)
   | 'MORGANA'         // 莫甘娜 (邪惡)
   | 'MORDRED'         // 莫德雷德 (邪惡)
-  | 'OBERON';         // 奧伯倫 (邪惡)
+  | 'OBERON'          // 奧伯倫 (邪惡)
+  | 'MINION';         // 莫德雷德的爪牙 (邪惡，普通壞人)
 
 export type AvalonAlignment = 'GOOD' | 'EVIL';
 

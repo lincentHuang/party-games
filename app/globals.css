@@ -1092,6 +1092,12 @@ input:checked + .toggle-slider:before {
 .game-card-accent-avalon {
   border-left: 4px solid #3b82f6;
 }
+.game-card-accent-werewolf {
+  border-left: 4px solid #7c3aed;
+}
+.game-card-accent-roundtable {
+  border-left: 4px solid #0ea5e9;
+}
 .game-card-accent-sonar {
   border-left: 4px solid #10b981;
 }

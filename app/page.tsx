@@ -5,13 +5,24 @@ import React, { useState, useEffect } from 'react';
 import { LobbyHeader } from '@/components/lobby/LobbyHeader';
 import { GameLobbyView } from '@/components/lobby/GameLobbyView';
 import { SpyGame } from '@/components/spy/SpyGame';
-import { AvalonGame } from '@/components/avalon/AvalonGame';
+import { OnlineAvalonGame } from '@/components/avalon/online/OnlineAvalonGame';
+import { OnlineWerewolfGame } from '@/components/werewolf/OnlineWerewolfGame';
+import { OnlineRoundtableGame } from '@/components/roundtable/OnlineRoundtableGame';
 import { SonarGame } from '@/components/sonar/SonarGame';
 import { WondersGame } from '@/components/wonders/WondersGame';
 import { JoinRoomModal } from '@/components/multiplayer/JoinRoomModal';
 import { useMultiplayerRoom } from '@/hooks/useMultiplayerRoom';
+import { roomCodePrefix } from '@/hooks/usePeerRoom';
 
-type ActiveGame = 'LOBBY' | 'SPY' | 'AVALON' | 'SONAR' | 'WONDERS';
+type ActiveGame = 'LOBBY' | 'SPY' | 'AVALON' | 'WEREWOLF' | 'ROUNDTABLE' | 'SONAR' | 'WONDERS';
+
+// 手機點對點的遊戲：房號前綴、localStorage 前綴（重新整理時用來回到房間）
+const PEER_GAMES: { game: ActiveGame; prefix: string; storageKey: string }[] = [
+  { game: 'SPY', prefix: 'SPY', storageKey: 'spy' },
+  { game: 'AVALON', prefix: 'AVA', storageKey: 'avalon' },
+  { game: 'WEREWOLF', prefix: 'WLF', storageKey: 'werewolf' },
+  { game: 'ROUNDTABLE', prefix: 'RTW', storageKey: 'roundtable' }
+];
 
 export default function PartyGamesPage() {
   const [activeGame, setActiveGame] = useState<ActiveGame>('LOBBY');
@@ -31,12 +42,17 @@ export default function PartyGamesPage() {
         setInitialRoomId(roomParam);
       }
 
-      // 重新整理時若還在誰是間諜的房間裡，直接帶回去
-      let inSpyRoom = false;
-      try { inSpyRoom = !!localStorage.getItem('spy_current_room'); } catch {}
+      // 重新整理時若還在某個手機連線房間裡，直接帶回去
+      let resumeGame: ActiveGame | null = null;
+      try {
+        resumeGame = PEER_GAMES.find(g => localStorage.getItem(`${g.storageKey}_current_room`))?.game || null;
+      } catch {}
 
-      if (gameParam === 'SPY' || (!gameParam && inSpyRoom)) setActiveGame('SPY');
+      if (gameParam === 'SPY') setActiveGame('SPY');
       else if (gameParam === 'AVALON') setActiveGame('AVALON');
+      else if (gameParam === 'WEREWOLF') setActiveGame('WEREWOLF');
+      else if (gameParam === 'ROUNDTABLE') setActiveGame('ROUNDTABLE');
+      else if (!gameParam && resumeGame) setActiveGame(resumeGame);
       else if (gameParam === 'SONAR') setActiveGame('SONAR');
       else if (gameParam === 'WONDERS') setActiveGame('WONDERS');
     }
@@ -48,10 +64,11 @@ export default function PartyGamesPage() {
     // 先存暱稱，遊戲元件掛載時會讀到並以此名稱加入
     if (playerName) updatePlayerName(playerName);
 
-    // 誰是間諜是手機點對點連線，房號都是 SPY- 開頭，直接進遊戲連房主
-    if (cleanCode.startsWith('SPY')) {
+    // 手機點對點的遊戲看房號前綴（SPY-／AVA-／WLF-），直接進遊戲連房主
+    const peerGame = PEER_GAMES.find(g => g.prefix === roomCodePrefix(cleanCode));
+    if (peerGame) {
       setInitialRoomId(cleanCode);
-      setActiveGame('SPY');
+      setActiveGame(peerGame.game);
       return true;
     }
 
@@ -75,19 +92,21 @@ export default function PartyGamesPage() {
     }
   };
 
+  // 回大廳：一併清掉網址上的 ?game=&room=，免得重新整理又被帶回剛離開的房間
+  const goLobby = () => {
+    setActiveGame('LOBBY');
+    setInitialRoomId(null);
+    if (typeof window !== 'undefined' && window.history.replaceState) {
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+  };
+
   return (
     <>
       {/* 頂部全域導航列 */}
       <LobbyHeader
         currentGame={activeGame}
-        onGoLobby={() => {
-          setActiveGame('LOBBY');
-          setInitialRoomId(null);
-          // 清除 URL 參數
-          if (typeof window !== 'undefined' && window.history.replaceState) {
-            window.history.replaceState({}, '', window.location.pathname);
-          }
-        }}
+        onGoLobby={goLobby}
       />
 
       {/* 主畫面視圖 */}
@@ -104,28 +123,42 @@ export default function PartyGamesPage() {
 
         {activeGame === 'SPY' && (
           <SpyGame
-            onBackToLobby={() => setActiveGame('LOBBY')}
+            onBackToLobby={goLobby}
             initialRoomId={initialRoomId}
           />
         )}
 
         {activeGame === 'AVALON' && (
-          <AvalonGame
-            onBackToLobby={() => setActiveGame('LOBBY')}
+          <OnlineAvalonGame
+            onExit={goLobby}
+            initialRoomId={initialRoomId}
+          />
+        )}
+
+        {activeGame === 'WEREWOLF' && (
+          <OnlineWerewolfGame
+            onExit={goLobby}
+            initialRoomId={initialRoomId}
+          />
+        )}
+
+        {activeGame === 'ROUNDTABLE' && (
+          <OnlineRoundtableGame
+            onExit={goLobby}
             initialRoomId={initialRoomId}
           />
         )}
 
         {activeGame === 'SONAR' && (
           <SonarGame
-            onBackToLobby={() => setActiveGame('LOBBY')}
+            onBackToLobby={goLobby}
             initialRoomId={initialRoomId}
           />
         )}
 
         {activeGame === 'WONDERS' && (
           <WondersGame
-            onBackToLobby={() => setActiveGame('LOBBY')}
+            onBackToLobby={goLobby}
             initialRoomId={initialRoomId}
           />
         )}

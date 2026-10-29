@@ -1,26 +1,22 @@
-// hooks/useSpyPeerRoom.ts
-// 誰是間諜多手機房間（PeerJS 點對點）：
-// 房主手機保存完整狀態並執行規則引擎，其他手機直接連到房主，只送出操作、收自己的視角。
+// hooks/usePeerRoom.ts
+// 多手機房間（PeerJS 點對點），各款遊戲共用：
+// 房主手機保存完整狀態並執行該遊戲的規則引擎，其他手機直接連到房主，只送出操作、收自己的視角。
 // 不需要自己的伺服器或資料庫，只用 PeerJS 公開的配對伺服器交換連線資訊。
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import type { DataConnection, Peer as PeerInstance } from 'peerjs';
 import { getStoredPlayer, hasChosenName, savePlayerName } from '@/lib/playerIdentity';
-import { addSpyPlayer, applySpyAction, buildSpyView, createInitialSpyState, SpyMutation } from '@/lib/spyEngine';
-import { SpyAction, SpyHostRoom, SpyRoomView } from '@/types/spyRoom';
+import { PeerActionBase, PeerGameEngine, PeerHostRoomBase, PeerMutation, PeerViewBase } from '@/types/peerRoom';
 
-const PEER_PREFIX = 'lincent-party-spy-';
 const CODE_CHARS = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
-const SESSION_KEY = 'spy_current_room';
-const HOST_ROOM_KEY = 'spy_host_room';
 const RETRY_MS = 2500;
 const GUEST_MAX_RETRIES = 48; // 約 2 分鐘連不到房主就放棄
 
 type PeerMessage =
   | { type: 'hello'; id: string; secret: string; name: string }
-  | { type: 'action'; reqId: string; action: SpyAction }
-  | { type: 'view'; view: SpyRoomView }
+  | { type: 'action'; reqId: string; action: PeerActionBase }
+  | { type: 'view'; view: PeerViewBase }
   | { type: 'result'; reqId: string; ok: boolean; message?: string }
   | { type: 'error'; message: string }
   | { type: 'kicked' }
@@ -33,18 +29,25 @@ interface Session {
   roomId: string;
 }
 
+// 房號前綴決定是哪款遊戲，例如 SPY-K7Q2、AVA-K7Q2、WLF-K7Q2
 // 「spy-k7q2」「K7Q2」都轉成「SPY-K7Q2」
-export function normalizeRoomCode(input: string): string {
-  const code = input.trim().toUpperCase().replace(/^SPY-?/, '').replace(/[^A-Z0-9]/g, '');
-  return `SPY-${code}`;
+export function normalizeRoomCode(input: string, prefix: string): string {
+  const code = input.trim().toUpperCase().replace(new RegExp(`^${prefix}-?`), '').replace(/[^A-Z0-9]/g, '');
+  return `${prefix}-${code}`;
 }
 
-const peerIdFor = (roomId: string) => PEER_PREFIX + roomId.replace(/^SPY-/, '').toLowerCase();
+// 從房號判斷是哪款遊戲（大廳輸入房號時用）
+export function roomCodePrefix(input: string): string {
+  return input.trim().toUpperCase().match(/^([A-Z]{3})-?[A-Z0-9]{4}$/)?.[1] || '';
+}
 
-function randomCode(): string {
+const peerIdFor = (prefix: string, roomId: string) =>
+  `lincent-party-${prefix.toLowerCase()}-` + roomId.replace(new RegExp(`^${prefix}-`), '').toLowerCase();
+
+function randomCode(prefix: string): string {
   let code = '';
   for (let i = 0; i < 4; i++) code += CODE_CHARS[Math.floor(Math.random() * CODE_CHARS.length)];
-  return `SPY-${code}`;
+  return `${prefix}-${code}`;
 }
 
 function readJSON<T>(key: string): T | null {
@@ -91,14 +94,20 @@ function peerErrorMessage(err: any): string {
   }
 }
 
-export function useSpyPeerRoom(initialRoomId?: string | null) {
-  const [view, setView] = useState<SpyRoomView | null>(null);
+export function usePeerRoom<R extends PeerHostRoomBase, V extends PeerViewBase, A extends PeerActionBase>(
+  engine: PeerGameEngine<R, V, A>,
+  initialRoomId?: string | null
+) {
+  const PREFIX = engine.codePrefix;
+  const SESSION_KEY = `${engine.storageKey}_current_room`;
+  const HOST_ROOM_KEY = `${engine.storageKey}_host_room`;
+  const [view, setView] = useState<V | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isBusy, setIsBusy] = useState(false);
   const [isResuming, setIsResuming] = useState(false);
   const [status, setStatus] = useState<LinkStatus>('idle');
 
-  const viewRef = useRef<SpyRoomView | null>(null);
+  const viewRef = useRef<V | null>(null);
   const clockOffsetRef = useRef(0);
   const peerRef = useRef<PeerInstance | null>(null);
   const roleRef = useRef<'host' | 'guest' | null>(null);
@@ -108,7 +117,7 @@ export function useSpyPeerRoom(initialRoomId?: string | null) {
   const wakeLockRef = useRef<any>(null);
 
   // 房主專用
-  const roomRef = useRef<SpyHostRoom | null>(null);
+  const roomRef = useRef<R | null>(null);
   const connsRef = useRef<Map<string, DataConnection>>(new Map());
 
   // 玩家專用
@@ -117,7 +126,7 @@ export function useSpyPeerRoom(initialRoomId?: string | null) {
   const guestRetriesRef = useRef(0);
   const pendingRef = useRef<Map<string, (r: { ok: boolean; message?: string }) => void>>(new Map());
 
-  const applyView = useCallback((next: SpyRoomView) => {
+  const applyView = useCallback((next: V) => {
     // 慢回來的舊狀態不能蓋掉較新的狀態
     const cur = viewRef.current;
     if (cur && cur.roomId === next.roomId && next.version < cur.version) return;
@@ -167,13 +176,13 @@ export function useSpyPeerRoom(initialRoomId?: string | null) {
     const online = new Set<string>([room.hostId]);
     connsRef.current.forEach((c, id) => { if (c.open) online.add(id); });
     writeJSON(HOST_ROOM_KEY, room);
-    applyView(buildSpyView(room, room.hostId, online));
+    applyView(engine.buildView(room, room.hostId, online));
     connsRef.current.forEach((conn, id) => {
-      if (conn.open) conn.send({ type: 'view', view: buildSpyView(room, id, online) } satisfies PeerMessage);
+      if (conn.open) conn.send({ type: 'view', view: engine.buildView(room, id, online) } satisfies PeerMessage);
     });
-  }, [applyView]);
+  }, [applyView, engine, HOST_ROOM_KEY]);
 
-  const hostMutate = useCallback((fn: (room: SpyHostRoom) => SpyMutation): string | null => {
+  const hostMutate = useCallback((fn: (room: R) => PeerMutation<R>): string | null => {
     const current = roomRef.current;
     if (!current) return '房間不存在';
     const result = fn(structuredClone(current));
@@ -206,7 +215,7 @@ export function useSpyPeerRoom(initialRoomId?: string | null) {
           conn.send({ type: 'error', message: '玩家身分無效' } satisfies PeerMessage);
           return;
         }
-        const err = hostMutate(room => addSpyPlayer(room, { id, name, secret }));
+        const err = hostMutate(room => engine.addPlayer(room, { id, name, secret }));
         if (err) {
           conn.send({ type: 'error', message: err } satisfies PeerMessage);
           setTimeout(() => conn.close(), 300);
@@ -222,7 +231,7 @@ export function useSpyPeerRoom(initialRoomId?: string | null) {
 
       if (msg.type === 'action' && boundId && msg.action && typeof msg.action === 'object') {
         const playerId = boundId;
-        const err = hostMutate(room => applySpyAction(room, playerId, msg.action));
+        const err = hostMutate(room => engine.applyAction(room, playerId, msg.action as A));
         conn.send({ type: 'result', reqId: msg.reqId, ok: !err, message: err || undefined } satisfies PeerMessage);
         if (!err && msg.action.action === 'LEAVE') {
           connsRef.current.delete(playerId);
@@ -240,11 +249,11 @@ export function useSpyPeerRoom(initialRoomId?: string | null) {
       }
     });
     conn.on('error', () => {});
-  }, [hostMutate, hostPublish]);
+  }, [hostMutate, hostPublish, engine]);
 
   // 用房號當 peer id 上線；房號被占用時（例如剛重新整理，舊連線還沒釋放）回傳錯誤
   const openHostPeer = useCallback(async (roomId: string, gen: number) => {
-    const peer = await createPeer(peerIdFor(roomId));
+    const peer = await createPeer(peerIdFor(PREFIX, roomId));
     if (gen !== genRef.current) { peer.destroy(); throw { type: 'stale' }; }
     try {
       await waitForOpen(peer);
@@ -260,9 +269,9 @@ export function useSpyPeerRoom(initialRoomId?: string | null) {
       if (gen === genRef.current && !peer.destroyed) setTimeout(() => !peer.destroyed && peer.reconnect(), RETRY_MS);
     });
     peer.on('error', () => {});
-  }, [hostAttachConn]);
+  }, [hostAttachConn, PREFIX]);
 
-  const resumeHost = useCallback((room: SpyHostRoom) => {
+  const resumeHost = useCallback((room: R) => {
     const gen = ++genRef.current;
     roleRef.current = 'host';
     roomRef.current = room;
@@ -293,7 +302,7 @@ export function useSpyPeerRoom(initialRoomId?: string | null) {
     try {
       let roomId = '';
       for (let i = 0; i < 6 && !roomId; i++) {
-        const candidate = randomCode();
+        const candidate = randomCode(PREFIX);
         try {
           await openHostPeer(candidate, gen);
           roomId = candidate;
@@ -304,13 +313,7 @@ export function useSpyPeerRoom(initialRoomId?: string | null) {
       if (!roomId) throw new Error('建立房間失敗，請再試一次');
 
       roleRef.current = 'host';
-      roomRef.current = {
-        id: roomId,
-        hostId: me.id,
-        version: 1,
-        players: [{ id: me.id, name: cleanName, isHost: true, secret: me.secret }],
-        gameState: createInitialSpyState()
-      };
+      roomRef.current = engine.createRoom(roomId, { id: me.id, name: cleanName, isHost: true, secret: me.secret });
       writeJSON(SESSION_KEY, { role: 'host', roomId } satisfies Session);
       hostPublish();
       setStatus('online');
@@ -322,7 +325,7 @@ export function useSpyPeerRoom(initialRoomId?: string | null) {
     } finally {
       setIsBusy(false);
     }
-  }, [hostPublish, openHostPeer, requestWakeLock]);
+  }, [hostPublish, openHostPeer, requestWakeLock, engine, PREFIX, SESSION_KEY]);
 
   // ───────── 玩家 ─────────
 
@@ -340,7 +343,7 @@ export function useSpyPeerRoom(initialRoomId?: string | null) {
     if (gen !== genRef.current) throw { type: 'stale' };
 
     const me = getStoredPlayer();
-    const conn = peer.connect(peerIdFor(roomId), { reliable: true, serialization: 'json' });
+    const conn = peer.connect(peerIdFor(PREFIX, roomId), { reliable: true, serialization: 'json' });
 
     await new Promise<void>((resolve, reject) => {
       let settled = false;
@@ -365,7 +368,7 @@ export function useSpyPeerRoom(initialRoomId?: string | null) {
         if (msg.type === 'view') {
           hostConnRef.current = conn;
           guestRetriesRef.current = 0;
-          applyView(msg.view);
+          applyView(msg.view as V);
           setStatus('online');
           done();
         } else if (msg.type === 'result') {
@@ -411,7 +414,7 @@ export function useSpyPeerRoom(initialRoomId?: string | null) {
   }, [guestConnect, teardown]);
 
   const joinRoom = useCallback(async (code: string, name?: string, silent = false) => {
-    const roomId = normalizeRoomCode(code);
+    const roomId = normalizeRoomCode(code, PREFIX);
     if (roomId.length < 6) {
       setError('請輸入房號');
       return false;
@@ -441,12 +444,12 @@ export function useSpyPeerRoom(initialRoomId?: string | null) {
 
   // ───────── 共用操作 ─────────
 
-  const act = useCallback(async (action: SpyAction): Promise<boolean> => {
+  const act = useCallback(async (action: A): Promise<boolean> => {
     if (roleRef.current === 'host') {
       const room = roomRef.current;
       if (!room) return false;
-      const err = hostMutate(r => applySpyAction(r, room.hostId, action));
-      if (!err && action.action === 'KICK') hostKick(action.targetId);
+      const err = hostMutate(r => engine.applyAction(r, room.hostId, action));
+      if (!err && action.action === 'KICK' && action.targetId) hostKick(action.targetId);
       setError(err);
       return !err;
     }
@@ -469,7 +472,7 @@ export function useSpyPeerRoom(initialRoomId?: string | null) {
     setIsBusy(false);
     setError(result.ok ? null : result.message || '操作失敗');
     return result.ok;
-  }, [hostMutate, hostKick]);
+  }, [hostMutate, hostKick, engine]);
 
   const leaveRoom = useCallback(async () => {
     if (roleRef.current === 'host') {
@@ -479,7 +482,7 @@ export function useSpyPeerRoom(initialRoomId?: string | null) {
       // 讓「房間解散」訊息送出去再斷線
       await new Promise(r => setTimeout(r, 300));
     } else if (hostConnRef.current?.open) {
-      await act({ action: 'LEAVE' });
+      await act({ action: 'LEAVE' } as A);
     }
     teardown(null);
   }, [act, teardown]);
@@ -488,10 +491,10 @@ export function useSpyPeerRoom(initialRoomId?: string | null) {
 
   useEffect(() => {
     const session = readJSON<Session>(SESSION_KEY);
-    const wanted = initialRoomId ? normalizeRoomCode(initialRoomId) : null;
+    const wanted = initialRoomId ? normalizeRoomCode(initialRoomId, PREFIX) : null;
 
     if (session?.role === 'host' && (!wanted || wanted === session.roomId)) {
-      const saved = readJSON<SpyHostRoom>(HOST_ROOM_KEY);
+      const saved = readJSON<R>(HOST_ROOM_KEY);
       if (saved && saved.id === session.roomId) resumeHost(saved);
       else writeJSON(SESSION_KEY, null);
     } else if (wanted) {
